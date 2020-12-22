@@ -8,21 +8,6 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from events.base_event              import BaseEvent
 from events                         import *
 from multiprocessing                import Process
-from flask import Flask
-from threading import Thread
-
-app = Flask('')
-
-@app.route('/')
-def main():
-  return "Your Bot Is Ready"
-
-def run():
-  app.run(host="0.0.0.0", port=8000)
-
-def keep_alive():
-  server = Thread(target=run)
-  server.start()
 
 # Set to remember if the bot is already running, since on_ready may be called
 # more than once on reconnects
