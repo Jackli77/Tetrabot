@@ -44,13 +44,11 @@ class Random(BaseCommand):
                 return
         if lower > upper:
             await message.channel.send(
-                "{0}, The lower bound can't be higher than the upper bound!".format("Input Usenrame"))
+                "{0}, The lower bound can't be higher than the upper bound!".format(message.author.mention))
             return
 
-        rolled = randint(lower, upper)
+        rolled = randint(lower, upper+1)
 
-        msg = get_emoji(":game_die:") + message.author.mention + " ,tes bornes sont [{0},{1}] ".format(lower,
-                                                                                                       upper) + get_emoji(
-            ":game_die:") + "\n" \
-              + get_emoji(":game_die:") + f" La mère d'Hugo vient de tirer un {rolled}! " + get_emoji(":game_die:")
+        msg = "<:game_die:791035424507691013> {0}. La roulette va de **{1}** à **{2}** <:game_die:791035424507691013>".format(message.author.mention, lower, upper) + "\n" \
+              + "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un **{0}**! pour {1} <:game_die:791035424507691013>".format(rolled,message.author.mention)
         await message.channel.send(msg)

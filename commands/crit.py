@@ -15,7 +15,7 @@ class gamble(BaseCommand):
         # Parameters will be separated by spaces and fed to the 'params'
         # argument in the handle() method
         # If no params are expected, leave this list empty or set it to None
-        params = ["adversaire","limite"]
+        params = ["adversaire","somme"]
         super().__init__(description, params)
 
     # Override the handle() method
@@ -40,14 +40,14 @@ class gamble(BaseCommand):
 
         rolled1 = randint(lower, upper+1)
         rolled2 = randint(lower, upper+1)
-        msg1 = "<:game_die:791035424507691013> {0},{1}. La roulette va de **{2}** à **{3}** <:game_die:791035424507691013>".format(message.author.mention, adversaire, lower, upper)
-        msg2 = "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un **{0}**! pour {1} <:game_die:791035424507691013>".format(rolled1,message.author.mention)
-        msg3 = "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un **{0}**! pour {1} <:game_die:791035424507691013>".format(rolled2,adversaire)
+        msg1 = "<:game_die:791035424507691013> {0},{1}. La roulette va de {2} à {3} <:game_die:791035424507691013>".format(message.author.mention, adversaire, lower, upper)
+        msg2 = "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un {0}! pour {1} <:game_die:791035424507691013>".format(rolled1,message.author.mention)
+        msg3 = "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un {0}! pour {1} <:game_die:791035424507691013>".format(rolled2,adversaire)
         if rolled1 < rolled2:
-            msg4 = "<:game_die:791035424507691013> Le gagnant est {0}! {1} doit **{2}** kakeras à {0} <:game_die:791035424507691013>".format(
+            msg4 = "<:game_die:791035424507691013> Le gagnant est {0}! {1} doit {2} kakeras à {0} <:game_die:791035424507691013>".format(
                 message.author.mention,adversaire, rolled2 - rolled1)
         else:
-            msg4 = "<:game_die:791035424507691013> Le gagnant est {0}! {1} doit **{2}** kakeras à {0} <:game_die:791035424507691013>".format(
+            msg4 = "<:game_die:791035424507691013> Le gagnant est {0}! {1} doit {2} kakeras à {0} <:game_die:791035424507691013>".format(
                 adversaire,message.author.mention, rolled1 - rolled2)
         await message.channel.send(msg1)
         await sleep(2)

@@ -1,6 +1,5 @@
 from commands.base_command import BaseCommand
 from asyncio import sleep
-from discord import User
 
 # Your friendly example event
 # Keep in mind that the command name will be derived from the class name
@@ -11,12 +10,12 @@ class aup(BaseCommand):
 
     def __init__(self):
         # A quick description for the help message
-        description = "Fais venir @User au pièd"
+        description = "Fais venir @toutou au pièd"
         # A list of parameters that the command will take as input
         # Parameters will be separated by spaces and fed to the 'params'
         # argument in the handle() method
         # If no params are expected, leave this list empty or set it to None
-        params = ["toutou"]
+        params = ["@toutou"]
         super().__init__(description, params)
 
     # Override the handle() method
