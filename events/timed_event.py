@@ -9,18 +9,14 @@ from datetime               import datetime
 class ExampleEvent(BaseEvent):
 
     def __init__(self):
-        interval_minutes = 120 # Set the interval for this event
+        interval_minutes = 1 # Set the interval for this event
         super().__init__(interval_minutes)
 
     # Override the run() method
     # It will be called once every {interval_minutes} minutes
     async def run(self, client):
         now = datetime.now()
-
-        if now.hour == 12:
-            msg = "It's high noon!"
-        else:
-            msg = f"It is {now.hour}:{now.minute}"
-
-        channel = get_channel(client, "general")
-        await channel.send(msg)
+        if now.minute == 28:
+            msg = f"Il est {now.hour}:{now.minute}, autrement dit l'heure des waifus"
+            channel = get_channel(client, "waifu")
+            await channel.send(msg)

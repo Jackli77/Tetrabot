@@ -1,6 +1,7 @@
 from commands.base_command import BaseCommand
 from asyncio import sleep
 from numpy.random import randint
+from discord.client import Client
 
 # Your friendly example event
 # Keep in mind that the command name will be derived from the class name
@@ -37,10 +38,9 @@ class gamble(BaseCommand):
             await message.channel.send(
                 "{0}, The lower bound can't be higher than the upper bound!".format(message.author.mention))
             return
-
         rolled1 = randint(lower, upper+1)
         rolled2 = randint(lower, upper+1)
-        msg1 = "<:game_die:791035424507691013> {0},{1}. La roulette va de **{2}** à **{3}** <:game_die:791035424507691013>".format(message.author.mention, adversaire, lower, upper)
+        msg1 = "<:game_die:791035424507691013> {0} vs {1}. La roulette va de **{2}** à **{3}** <:game_die:791035424507691013>".format(message.author.mention, adversaire, lower, upper)
         msg2 = "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un **{0}**! pour {1} <:game_die:791035424507691013>".format(rolled1,message.author.mention)
         msg3 = "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un **{0}**! pour {1} <:game_die:791035424507691013>".format(rolled2,adversaire)
         if rolled1 < rolled2:
