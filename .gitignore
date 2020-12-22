@@ -104,4 +104,7 @@ venv.bak/
 
 # idea
 .idea
+
+#replit
+.replit
 # End of https://www.gitignore.io/api/python
