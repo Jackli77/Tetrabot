@@ -17,7 +17,7 @@ class Random(BaseCommand):
         # Parameters will be separated by spaces and fed to the 'params' 
         # argument in the handle() method
         # If no params are expected, leave this list empty or set it to None
-        params = ["lower", "upper"]
+        params = ["Bound"]
         super().__init__(description, params)
 
     # Override the handle() method
@@ -33,9 +33,11 @@ class Random(BaseCommand):
             lower_bound = int(params[0])
             upper_bound = int(params[1])
         except ValueError:
-            await client.send_message(message.channel,
-                                      "Please, provide valid numbers")
-            return
+            try:
+                upper_bound = int(params[0])
+                lower_bound = 1
+            except ValueError:
+                await client.send_message(message.channel,"Please, provide valid numbers")
 
         if lower_bound > upper_bound:
             await client.send_message(message.channel,
