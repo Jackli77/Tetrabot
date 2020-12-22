@@ -42,7 +42,10 @@ class Random(BaseCommand):
                         "The lower bound can't be higher than the upper bound")
             return
 
-        rolled = randint(lower_bound, upper_bound)
-        msg = get_emoji(":game_die:") + f" You rolled {rolled}!"
+        if upper_bound == NULL:
+            rolled = randint(1, lower_bound)
+        else:
+            rolled = randint(lower_bound, upper_bound)
+        msg =  f" a obtenu {rolled}!" + get_emoji(":game_die:")
 
-        await message.channel.send(msg)
+        await client.send_message(message.channel,msg)
