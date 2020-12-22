@@ -17,7 +17,7 @@ class Random(BaseCommand):
         # Parameters will be separated by spaces and fed to the 'params' 
         # argument in the handle() method
         # If no params are expected, leave this list empty or set it to None
-        params = ["bound"]
+        params = []
         super().__init__(description, params)
 
     # Override the handle() method
@@ -28,17 +28,25 @@ class Random(BaseCommand):
         # parameters as specified in __init__
         # 'message' is the discord.py Message object for the command to handle
         # 'client' is the bot Client object
-
-        try:
-            bound = int(params[0])
-        except ValueError:
-            await client.send_message(message.channel,"Please, provide valid numbers")
-            return
-
-        if bound <= 0:
+        lower = 1
+        upper = 100
+        if len(params) > 1:
+            try:
+                lower = int(params[0])
+                upper = int(params[1])
+            except ValueError:
+                await client.send_message(message.channel,"Please, provide valid numbers")
+                return
+        elif len(params) > 0:
+            try:
+                upper = int(params[0])
+            except ValueError:
+                await client.send_message(message.channel, "Please, provide valid numbers")
+                return
+        if lower > upper:
             await client.send_message(message.channel,"The lower bound can't be higher than the upper bound")
             return
 
-        rolled = randint(1, bound)
+        rolled = randint(lower, upper)
         msg = get_emoji(":game_die:") + f" La mère d'Hugo vient de tirer un {rolled}!"
         await message.channel.send(msg)
