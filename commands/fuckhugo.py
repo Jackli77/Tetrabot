@@ -1,6 +1,5 @@
-from commands.base_command  import BaseCommand
-from utils                  import get_emoji
-
+from commands.base_command import BaseCommand
+from time import *
 
 # Your friendly example event
 # Keep in mind that the command name will be derived from the class name
@@ -22,4 +21,8 @@ class fu(BaseCommand):
     # Override the handle() method
     # It will be called every time the command is received
     async def handle(self, params, message, client):
-        await message.channel.send("Fuck Hugo" + get_emoji(":Vibrator:"))
+        await message.channel.send("Fuck Hugo " + "<:Vibrator:689891174886146069>")
+        for i in range(3):
+            sleep(2)
+            await message.channel.send('Viens ici %s et fais waf %s ' % ('<@284414958932852736>',
+                                                                     "<:bontoutou:790992228301668352>"))
