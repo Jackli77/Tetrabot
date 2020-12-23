@@ -18,6 +18,6 @@ class ExampleEvent(BaseEvent):
     async def run(self, client):
         now = datetime.now()
         uptime = now - self.startime
-        msg = f"Le serveur tourne depuis {str(uptime).split('.', 2)[0]}"
+        msg = f"Le bot tourne depuis {str(uptime).split('.', 2)[0]}"
         channel = get_channel(client, "débug")
         await channel.send(msg)
