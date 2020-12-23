@@ -1,7 +1,6 @@
 from events.base_event      import BaseEvent
 from utils                  import get_channel
-
-from datetime               import datetime
+from datetime               import *
 
 
 # Your friendly example event
@@ -18,7 +17,7 @@ class ExampleEvent(BaseEvent):
     # It will be called once every {interval_minutes} minutes
     async def run(self, client):
         now = datetime.now()
-        uptime = now - self.uptime
-        msg = f"Le serveur tourne depuis {uptime} heures"
+        uptime = now - self.startime
+        msg = f"Le serveur tourne depuis {str(uptime).split('.', 2)[0]}"
         channel = get_channel(client, "débug")
         await channel.send(msg)

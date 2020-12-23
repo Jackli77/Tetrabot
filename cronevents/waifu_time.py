@@ -1,7 +1,6 @@
-from discord.ext import tasks
 from cronevents.base_cronevent import BaseCronEvent
 from utils                  import get_channel
-from datetime               import datetime
+from datetime               import *
 
 
 # Your friendly example event
@@ -14,7 +13,7 @@ class Waifu_time(BaseCronEvent):
 
     # Override the run() method
     async def run(self, client):
-        now = datetime.now()
+        now = datetime.now() + timedelta(hours=1)
         msg = f"<@&582978303086952452> Il est maintenant {now.hour}:{now.minute}, autrement dit l'heure des waifus"
         channel = get_channel(client, "waifu")
         await channel.send(msg)
