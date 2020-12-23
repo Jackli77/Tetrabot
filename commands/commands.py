@@ -6,7 +6,7 @@ from commands.base_command import BaseCommand
 class Commands(BaseCommand):
 
     def __init__(self):
-        description = "Displays this help message"
+        description = "Affiche ce message d'aide"
         params = None
         super().__init__(description, params)
 

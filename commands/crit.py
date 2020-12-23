@@ -29,6 +29,7 @@ class crit(BaseCommand):
         manche = 0
         crit1 = 0
         crit2 = 0
+        streak = 0
         try:
             adversaire = params[0]
             argent = int(params[1])
@@ -63,8 +64,12 @@ class crit(BaseCommand):
             if crited2:
                 crit2 += 1
                 await message.channel.send(msg2)
+                if crited1:
+                    argent *= 2
+                    await message.channel.send("La somme en jeu passe à {} <:money_with_wings:791121758774231050><:money_with_wings:791121758774231050>".format(argent))
             else:
                 await message.channel.send(msg4)
+
         await sleep(2)
         msg5 = "Le duel s'est terminée après {} manches, avec {} égalités".format(manche, min(crit1, crit2))
         msg6 = "Le gagnant est {0}, {1} doit donner {2} à {0} <:money_with_wings:791121758774231050>".format(message.author.mention, adversaire, argent)

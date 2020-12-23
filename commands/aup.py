@@ -22,7 +22,7 @@ class aup(BaseCommand):
     # It will be called every time the command is received
     async def handle(self, params, message, client):
         toutou = params[0]
-        await message.channel.send("Au pièd <:bontoutou:790992228301668352>")
+        await message.channel.send("Au pièd,{} <:bontoutou:790992228301668352>".format(toutou))
         await sleep(3)
         for i in range(5):
             await message.channel.send('Viens ici %s et fais waf %s ' % (toutou,
