@@ -10,18 +10,15 @@ from datetime               import datetime
 class ExampleEvent(BaseEvent):
 
     def __init__(self):
-        interval_minutes = 120  # Set the interval for this event
+        interval_minutes = 1  # Set the interval for this event
+        self.startime = datetime.now()
         super().__init__(interval_minutes)
 
     # Override the run() method
     # It will be called once every {interval_minutes} minutes
     async def run(self, client):
         now = datetime.now()
-
-        if now.hour == 12:
-            msg = "It's high noon!"
-        else:
-            msg = f"It is {now.hour}:{now.minute}"
-
-        channel = get_channel(client, "gambling school")
+        uptime = now - self.uptime
+        msg = f"Le serveur tourne depuis {uptime} heures"
+        channel = get_channel(client, "débug")
         await channel.send(msg)
