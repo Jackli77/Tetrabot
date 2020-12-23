@@ -1,3 +1,5 @@
+from discord import Client
+
 from commands.base_command import BaseCommand
 from asyncio import sleep
 from numpy.random import randint
@@ -29,7 +31,6 @@ class crit(BaseCommand):
         manche = 0
         crit1 = 0
         crit2 = 0
-        streak = 0
         try:
             adversaire = params[0]
             argent = int(params[1])
@@ -40,16 +41,20 @@ class crit(BaseCommand):
             await message.channel.send(
                 "{0}, Quid d'écrire des nombres négatifs ?".format(message.author.mention))
             return
-        msg0 = "{} challenge {} à un duel de chafer crit".format(message.author.mention,adversaire)
-        msg1 = "{} **Coup critique!**<:bangbang:791122260046905355><:bangbang:791122260046905355>".format(message.author.mention)
-        msg2 = "{} **Coup critique!**<:bangbang:791122260046905355><:bangbang:791122260046905355>".format(adversaire)
-        msg3 = "Pas de chance, {}".format(message.author.mention)
-        msg4 = "Pas de chance, {}".format(adversaire)
+        aut_id = int(''.join(filter(str.isdigit, message.author.mention)))
+        ad_id = int(''.join(filter(str.isdigit, adversaire)))
+        adv_usr = await Client.fetch_user(client, ad_id)
+        aut_usr = await Client.fetch_user(client, aut_id)
+        msg0 = "**{}** challenge **{}** à un duel de chafer crit!".format(aut_usr.mention,adv_usr.mention)
+        msg1 = "**{} Coup critique!**<:bangbang:791122260046905355>".format(aut_usr.display_name)
+        msg2 = "**{} Coup critique!**<:bangbang:791122260046905355>".format(adv_usr.display_name)
+        msg3 = "Pas de chance, **{}** <:8219_cheems:720974989490389043>".format(aut_usr.display_name)
+        msg4 = "Pas de chance, **{}** <:8219_cheems:720974989490389043>".format(adv_usr.display_name)
         await message.channel.send(msg0)
         while crit1 == crit2:
             await sleep(2)
             manche += 1
-            await message.channel.send("**Manche {}**".format(manche))
+            await message.channel.send("__**Manche {}**__".format(manche))
 
             await sleep(2)
             crited1 = randint(0, 100) < 15
@@ -66,14 +71,14 @@ class crit(BaseCommand):
                 await message.channel.send(msg2)
                 if crited1:
                     argent *= 2
-                    await message.channel.send("La somme en jeu passe à {} <:money_with_wings:791121758774231050><:money_with_wings:791121758774231050>".format(argent))
+                    await message.channel.send("La somme en jeu passe à **{}** <:money_with_wings:791121758774231050>".format(argent))
             else:
                 await message.channel.send(msg4)
 
         await sleep(2)
-        msg5 = "Le duel s'est terminée après {} manches, avec {} égalités".format(manche, min(crit1, crit2))
-        msg6 = "Le gagnant est {0}, {1} doit donner {2} à {0} <:money_with_wings:791121758774231050>".format(message.author.mention, adversaire, argent)
-        msg7 = "Le gagnant est {0}, {1} doit donner {2} à {0} <:money_with_wings:791121758774231050>".format(adversaire, message.author.mention, argent)
+        msg5 = "Le duel s'est terminée après **{}** manches et **{}** égalités".format(manche, min(crit1, crit2))
+        msg6 = "Le gagnant est **{0}**, **{1}** doit donner **{2}** à **{0}** <:money_with_wings:791121758774231050>".format(aut_usr.display_name, adv_usr.display_name, argent)
+        msg7 = "Le gagnant est **{0}**, **{1}** doit donner **{2}** à **{0}** <:money_with_wings:791121758774231050>".format(adv_usr.display_name, aut_usr.display_name, argent)
         if crit1 > crit2:
             await message.channel.send(msg5 + "\n" + msg6)
         else:

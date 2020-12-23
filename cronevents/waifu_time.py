@@ -10,12 +10,12 @@ from datetime               import datetime
 class Waifu_time(BaseCronEvent):
 
     def __init__(self):
-        super().__init__(minute = 28)
+        super().__init__(minute = 28,second = 1)
 
     # Override the run() method
     # It will be called once every {interval_minutes} minutes
     async def run(self, client):
         now = datetime.now()
-        msg = f"<@&791250204925362186> Il est maintenant {now.hour}:{now.minute}, autrement dit l'heure des waifus"
+        msg = f"<@&582978303086952452> Il est maintenant {now.hour}:{now.minute}, autrement dit l'heure des waifus"
         channel = get_channel(client, "waifu")
         await channel.send(msg)
