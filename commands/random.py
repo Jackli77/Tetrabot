@@ -1,6 +1,6 @@
 from commands.base_command import BaseCommand
 from utils import get_emoji
-from random import randint
+from numpy.random import randint
 
 
 # Your friendly example event
@@ -47,8 +47,7 @@ class Random(BaseCommand):
                 "{0}, The lower bound can't be higher than the upper bound!".format(message.author.mention))
             return
 
-        rolled = randint(lower, upper)
-
+        rolled = randint(lower, upper+1)
         msg = "<:game_die:791035424507691013> {0}. La roulette va de **{1}** à **{2}** <:game_die:791035424507691013>".format(message.author.mention, lower, upper) + "\n" \
               + "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un **{0}**! pour {1} <:game_die:791035424507691013>".format(rolled,message.author.mention)
         await message.channel.send(msg)

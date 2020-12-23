@@ -10,7 +10,7 @@ from datetime               import datetime
 class ExampleEvent(BaseEvent):
 
     def __init__(self):
-        interval_minutes = 60  # Set the interval for this event
+        interval_minutes = 120  # Set the interval for this event
         super().__init__(interval_minutes)
 
     # Override the run() method
@@ -23,5 +23,5 @@ class ExampleEvent(BaseEvent):
         else:
             msg = f"It is {now.hour}:{now.minute}"
 
-        channel = get_channel(client, "general")
+        channel = get_channel(client, "gambling school")
         await channel.send(msg)
