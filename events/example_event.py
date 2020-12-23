@@ -9,7 +9,7 @@ from datetime               import *
 class ExampleEvent(BaseEvent):
 
     def __init__(self):
-        interval_minutes = 10  # Set the interval for this event
+        interval_minutes = 30  # Set the interval for this event
         self.startime = datetime.now()
         super().__init__(interval_minutes)
 
