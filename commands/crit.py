@@ -6,11 +6,11 @@ from numpy.random import randint
 # Keep in mind that the command name will be derived from the class name
 # but in lowercase
 # So, a command class named Random will generate a 'random' command
-class gamble(BaseCommand):
+class crit(BaseCommand):
 
     def __init__(self):
         # A quick description for the help message
-        description = "Challenge @user à un gamble"
+        description = "Challenge @user à un chafer crit"
         # A list of parameters that the command will take as input
         # Parameters will be separated by spaces and fed to the 'params'
         # argument in the handle() method
@@ -26,32 +26,50 @@ class gamble(BaseCommand):
         # parameters as specified in __init__
         # 'message' is the discord.py Message object for the command to handle
         # 'client' is the bot Client object
-        lower = 1
+        manche = 0
+        crit1 = 0
+        crit2 = 0
         try:
             adversaire = params[0]
-            upper = int(params[1])
+            argent = int(params[1])
         except ValueError:
-            await message.channel.send("Mentionne qqun puis écris la somme maximale séparée d'un espace")
+            await message.channel.send("Mentionne qqun puis écris la somme misée séparée d'un espace")
             return
-        if lower > upper:
+        if argent < 0:
             await message.channel.send(
-                "{0}, The lower bound can't be higher than the upper bound!".format(message.author.mention))
+                "{0}, Quid d'écrire des nombres négatifs ?".format(message.author.mention))
             return
+        msg0 = "{} challenge {} à un duel de chafer crit".format(message.author.mention,adversaire)
+        msg1 = "{} **Coup critique!**<:bangbang:791122260046905355><:bangbang:791122260046905355>".format(message.author.mention)
+        msg2 = "{} **Coup critique!**<:bangbang:791122260046905355><:bangbang:791122260046905355>".format(adversaire)
+        msg3 = "Pas de chance, {}".format(message.author.mention)
+        msg4 = "Pas de chance, {}".format(adversaire)
+        await message.channel.send(msg0)
+        while crit1 == crit2:
+            await sleep(2)
+            manche += 1
+            await message.channel.send("**Manche {}**".format(manche))
 
-        rolled1 = randint(lower, upper+1)
-        rolled2 = randint(lower, upper+1)
-        msg1 = "<:game_die:791035424507691013> {0},{1}. La roulette va de {2} à {3} <:game_die:791035424507691013>".format(message.author.mention, adversaire, lower, upper)
-        msg2 = "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un {0}! pour {1} <:game_die:791035424507691013>".format(rolled1,message.author.mention)
-        msg3 = "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un {0}! pour {1} <:game_die:791035424507691013>".format(rolled2,adversaire)
-        if rolled1 < rolled2:
-            msg4 = "<:game_die:791035424507691013> Le gagnant est {0}! {1} doit {2} kakeras à {0} <:game_die:791035424507691013>".format(
-                message.author.mention,adversaire, rolled2 - rolled1)
+            await sleep(2)
+            crited1 = randint(0, 100) < 15
+            if crited1:
+                crit1 += 1
+                await message.channel.send(msg1)
+            else:
+                await message.channel.send(msg3)
+
+            await sleep(2)
+            crited2 = randint(0, 100) < 15
+            if crited2:
+                crit2 += 1
+                await message.channel.send(msg2)
+            else:
+                await message.channel.send(msg4)
+        await sleep(2)
+        msg5 = "Le duel s'est terminée après {} manches, avec {} égalités".format(manche, min(crit1, crit2))
+        msg6 = "Le gagnant est {0}, {1} doit donner {2} à {0} <:money_with_wings:791121758774231050>".format(message.author.mention, adversaire, argent)
+        msg7 = "Le gagnant est {0}, {1} doit donner {2} à {0} <:money_with_wings:791121758774231050>".format(adversaire, message.author.mention, argent)
+        if crit1 > crit2:
+            await message.channel.send(msg5 + "\n" + msg6)
         else:
-            msg4 = "<:game_die:791035424507691013> Le gagnant est {0}! {1} doit {2} kakeras à {0} <:game_die:791035424507691013>".format(
-                adversaire,message.author.mention, rolled1 - rolled2)
-        await message.channel.send(msg1)
-        await sleep(2)
-        await message.channel.send(msg2)
-        await sleep(2)
-        await message.channel.send(msg3)
-        await message.channel.send(msg4)
+            await message.channel.send(msg5 + "\n" + msg7)

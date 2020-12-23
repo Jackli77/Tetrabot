@@ -8,7 +8,7 @@ COMMAND_PREFIX = "!"
 BOT_TOKEN = "NzkwODk4NzEwMjUwNjUxNjg4.X-HT0g.ItXFZn4w84XKdxairN9SVw_SJNo"
 
 # The now playing game. Set this to anything false-y ("", None) to disable it
-NOW_PLAYING = COMMAND_PREFIX + "La mère dugo"
+NOW_PLAYING = COMMAND_PREFIX + "commands"
 
 # Base directory. Feel free to use it if you want.
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
