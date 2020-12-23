@@ -6,6 +6,8 @@ import message_handler
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from events.base_event              import BaseEvent
+from cronevents.base_cronevent              import BaseCronEvent
+from cronevents                         import *
 from events                         import *
 from multiprocessing                import Process
 
@@ -47,9 +49,16 @@ def main():
         n_ev = 0
         for ev in BaseEvent.__subclasses__():
             event = ev()
-            sched.add_job(event.run, 'interval', (client,), 
+            sched.add_job(event.run, 'interval', (client,),
                           minutes=event.interval_minutes)
             n_ev += 1
+
+        for crev in BaseCronEvent.__subclasses__():
+            cronevent = crev()
+            sched.add_job(cronevent.run, 'cron', (client,),
+                          year=cronevent.year, month=cronevent.month, day=cronevent.day, week=cronevent.week, day_of_week=cronevent.day_of_week, hour=cronevent.hour, minute=cronevent.minute, second=cronevent.second)
+            n_ev += 1
+
         sched.start()
         print(f"{n_ev} events loaded", flush=True)
 
