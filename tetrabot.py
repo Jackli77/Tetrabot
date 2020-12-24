@@ -13,6 +13,8 @@ from multiprocessing                import Process
 
 # Set to remember if the bot is already running, since on_ready may be called
 # more than once on reconnects
+from utils import get_channel
+
 this = sys.modules[__name__]
 this.running = False
 
@@ -58,7 +60,8 @@ def main():
             sched.add_job(cronevent.run, 'cron', (client,),
                           year=cronevent.year, month=cronevent.month, day=cronevent.day, week=cronevent.week, day_of_week=cronevent.day_of_week, hour=cronevent.hour, minute=cronevent.minute, second=cronevent.second)
             n_ev += 1
-
+        channel = get_channel(client, "débug")
+        await channel.send(f"Le bot vient d'être démarré")
         sched.start()
         print(f"{n_ev} events loaded", flush=True)
 
