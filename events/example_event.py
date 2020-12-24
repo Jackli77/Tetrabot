@@ -6,7 +6,7 @@ from datetime               import *
 # Your friendly example event
 # You can name this class as you like, but make sure to set BaseEvent
 # as the parent class
-class ExampleEvent(BaseEvent):
+class senduptime(BaseEvent):
 
     def __init__(self):
         interval_minutes = 30  # Set the interval for this event
