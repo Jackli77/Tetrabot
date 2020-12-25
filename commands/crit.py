@@ -6,6 +6,7 @@ from commands.base_command import BaseCommand
 from asyncio import sleep
 from numpy.random import randint
 
+
 # Your friendly example event
 # Keep in mind that the command name will be derived from the class name
 # but in lowercase
@@ -60,13 +61,15 @@ class crit(BaseCommand):
                 return
         else:
             return
-        msg0 = "**{}** mise **{}** dans un duel de chafer crit **{}%**".format(aut_usr.mention,argent,odds)
+        msg0 = "**{}** mise **{}** dans un duel de chafer crit **{}%**".format(aut_usr.mention, argent, odds)
         bet_msg = await channel.send(msg0)
         await bet_msg.add_reaction('✅')
-        def check(reaction,user):
-            return str(reaction.emoji) == '✅' and reaction.message == bet_msg and not user.bot
+
+        def check(reaction, user):
+            return str(reaction.emoji) == '✅' and reaction.message == bet_msg and not user.bot and user != client.author
+
         try:
-            reaction,user = await client.wait_for('reaction_add', timeout=60.0, check=check)
+            reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
             adv_usr = user
         except asyncio.TimeoutError:
             await channel.send('Timeout')
@@ -97,14 +100,17 @@ class crit(BaseCommand):
                 await channel.send(msg2)
                 if crited1:
                     argent *= 2
-                    await channel.send("La somme en jeu passe à **{}** <:money_with_wings:791121758774231050>".format(argent))
+                    await channel.send(
+                        "La somme en jeu passe à **{}** <:money_with_wings:791121758774231050>".format(argent))
             else:
                 await channel.send(msg4)
 
         await sleep(2)
         msg5 = "Le duel s'est terminé après **{}** manches et **{}** égalités".format(manche, min(crit1, crit2))
-        msg6 = "Le gagnant est **{0}**, **{1}** doit donner **{2}** à **{0}** <:money_with_wings:791121758774231050>".format(aut_usr.display_name, adv_usr.display_name, argent)
-        msg7 = "Le gagnant est **{0}**, **{1}** doit donner **{2}** à **{0}** <:money_with_wings:791121758774231050>".format(adv_usr.display_name, aut_usr.display_name, argent)
+        msg6 = "Le gagnant est **{0}**, **{1}** doit donner **{2}** à **{0}** <:money_with_wings:791121758774231050>".format(
+            aut_usr.display_name, adv_usr.display_name, argent)
+        msg7 = "Le gagnant est **{0}**, **{1}** doit donner **{2}** à **{0}** <:money_with_wings:791121758774231050>".format(
+            adv_usr.display_name, aut_usr.display_name, argent)
         if crit1 > crit2:
             await channel.send(msg5 + "\n" + msg6)
         else:
