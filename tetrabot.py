@@ -98,7 +98,7 @@ def main():
         voice = get_channel(client, "voice")
         if after.channel is None:
             await voice.send(f"**{member}** s'est déconnecté de **{before.channel}**")
-        elif after.channel != before.channel:
+        elif str(after.channel) != str(before.channel):
             await voice.send(f"**{member}** à rejoint le salon **{after.channel}**")
 
     # Finally, set the bot running
