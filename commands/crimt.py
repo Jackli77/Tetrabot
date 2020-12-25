@@ -46,10 +46,10 @@ class crimt(BaseCommand):
         adv_usr = await Client.fetch_user(client, ad_id)
         aut_usr = await Client.fetch_user(client, aut_id)
         msg0 = "**{}** challenge **{}** à un duel de chafer crimt!".format(aut_usr.mention,adv_usr.mention)
-        msg1 = "**{} Coup critique!**<:bangbang:791122260046905355>".format(aut_usr.nick)
-        msg2 = "**{} Coup critique!**<:bangbang:791122260046905355>".format(adv_usr.nick)
-        msg3 = "Pas de chance, **{}** <:8219_cheems:720974989490389043>".format(aut_usr.nick)
-        msg4 = "Pas de chance, **{}** <:8219_cheems:720974989490389043>".format(adv_usr.nick)
+        msg1 = "**{} Coup critique!**<:bangbang:791122260046905355>".format(aut_usr.display_name)
+        msg2 = "**{} Coup critique!**<:bangbang:791122260046905355>".format(adv_usr.display_name)
+        msg3 = "Pas de chance, **{}** <:8219_cheems:720974989490389043>".format(aut_usr.display_name)
+        msg4 = "Pas de chance, **{}** <:8219_cheems:720974989490389043>".format(adv_usr.display_name)
         await message.channel.send(msg0)
         while crit1 == crit2:
             await sleep(2)
@@ -77,8 +77,8 @@ class crimt(BaseCommand):
 
         await sleep(2)
         msg5 = "Le duel s'est terminée après **{}** manches et **{}** égalités".format(manche, min(crit1, crit2))
-        msg6 = "Le gagnant est **{0}**, **{1}** doit donner **{2}** à **{0}** <:money_with_wings:791121758774231050>".format(aut_usr.nick, adv_usr.nick, argent)
-        msg7 = "Le gagnant est **{0}**, **{1}** doit donner **{2}** à **{0}** <:money_with_wings:791121758774231050>".format(adv_usr.nick, aut_usr.nick, argent)
+        msg6 = "Le gagnant est **{0}**, **{1}** doit donner **{2}** à **{0}** <:money_with_wings:791121758774231050>".format(aut_usr.display_name, adv_usr.display_name, argent)
+        msg7 = "Le gagnant est **{0}**, **{1}** doit donner **{2}** à **{0}** <:money_with_wings:791121758774231050>".format(adv_usr.display_name, aut_usr.display_name, argent)
         if crit1 > crit2:
             await message.channel.send(msg5 + "\n" + msg6)
         else:

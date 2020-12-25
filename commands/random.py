@@ -50,6 +50,6 @@ class Random(BaseCommand):
         aut_id = int(''.join(filter(str.isdigit, message.author.mention)))
         aut_usr = await Client.fetch_user(client, aut_id)
         rolled = randint(lower, upper+1)
-        msg = "<:game_die:791035424507691013> **{0}**. La roulette va de **{1}** à **{2}** <:game_die:791035424507691013>".format(aut_usr.nick, lower, upper) + "\n" \
-              + "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un **{0}**! **{1}**<:game_die:791035424507691013>".format(rolled,aut_usr.nick)
+        msg = "<:game_die:791035424507691013> **{0}**. La roulette va de **{1}** à **{2}** <:game_die:791035424507691013>".format(aut_usr.display_name, lower, upper) + "\n" \
+              + "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un **{0}**! **{1}**<:game_die:791035424507691013>".format(rolled,aut_usr.display_name)
         await message.channel.send(msg)

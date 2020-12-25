@@ -88,7 +88,10 @@ def main():
         deleted = get_channel(client, "deleted")
         for i in message.embeds:
             await deleted.send(embed = i)
-        await deleted.send(f"*{message.content}* écrit par **{message.author}** a été supprimé")
+        if message.content:
+            await deleted.send(f"*{message.content}* écrit par **{message.author}** a été supprimé")
+        else:
+            await deleted.send(f"*L'embed* écrit par **{message.author}** a été supprimé")
 
     @client.event
     async def on_voice_state_update(member, before, after):
