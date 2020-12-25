@@ -45,7 +45,7 @@ class crit(BaseCommand):
             except ValueError:
                 await channel.send("Précise la somme mise en jeu")
                 return
-            if argent < 0 or odds:
+            if argent < 0 or 90 < odds < 10:
                 await channel.send(
                     "{}, Value error: pas de nombres négatfis, odds compris entre 10 et 90".format(aut_usr.mention))
                 return
