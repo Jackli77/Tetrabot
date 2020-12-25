@@ -69,7 +69,7 @@ class crit(BaseCommand):
             return str(reaction.emoji) == '✅' and reaction.message == bet_msg and not user.bot
 
         try:
-            reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
+            reaction, user = await client.wait_for('reaction_add', timeout=45.0, check=check)
             adv_usr = user
         except asyncio.TimeoutError:
             await channel.send('Timeout')
