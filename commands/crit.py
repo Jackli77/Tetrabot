@@ -39,7 +39,7 @@ class crit(BaseCommand):
             return
         if argent < 0:
             await message.channel.send(
-                "{0}, Quid d'écrire des nombres négatifs ?".format(message.author.mention))
+                "{0}, Rentre un nombre positif?".format(message.author.mention))
             return
         aut_id = int(''.join(filter(str.isdigit, message.author.mention)))
         ad_id = int(''.join(filter(str.isdigit, adversaire)))

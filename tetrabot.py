@@ -28,7 +28,6 @@ def main():
     # Initialize the client
     print("Starting up...")
     client = discord.Client()
-
     # Define event handlers for the client
     # on_ready may be called multiple times in the event of a reconnect,
     # hence the running flag
@@ -38,7 +37,8 @@ def main():
             return
 
         this.running = True
-
+        debug = get_channel(client, "debug")
+        await debug.send(f"Le bot est pret!")
         # Set the playing status
         if settings.NOW_PLAYING:
             print("Setting NP game", flush=True)
@@ -60,8 +60,6 @@ def main():
             sched.add_job(cronevent.run, 'cron', (client,),
                           year=cronevent.year, month=cronevent.month, day=cronevent.day, week=cronevent.week, day_of_week=cronevent.day_of_week, hour=cronevent.hour, minute=cronevent.minute, second=cronevent.second)
             n_ev += 1
-        channel = get_channel(client, "débug")
-        await channel.send(f"Le bot vient d'être démarré")
         sched.start()
         print(f"{n_ev} events loaded", flush=True)
 
@@ -85,6 +83,10 @@ def main():
     async def on_message_edit(before, after):
         await common_handle_message(after)
 
+    @client.event
+    async def on_message_delete(message):
+        debug = get_channel(client, "debug")
+        await debug.send(f"\"{message.content}\" écrit par {message.author} a été supprimé")
     # Finally, set the bot running
     client.run(settings.BOT_TOKEN)
 

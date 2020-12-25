@@ -37,7 +37,7 @@ class gamble(BaseCommand):
             return
         if lower > upper:
             await message.channel.send(
-                "{0}, rentre un nombre plus grand que 1".format(message.author.mention))
+                "{0}, rentre un nombre strictement positif".format(message.author.mention))
             return
         aut_id = int(''.join(filter(str.isdigit, message.author.mention)))
         ad_id = int(''.join(filter(str.isdigit,adversaire)))
@@ -49,11 +49,21 @@ class gamble(BaseCommand):
         msg2 = "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un **{0}**! pour **{1}** <:game_die:791035424507691013>".format(rolled1,aut_usr.display_name)
         msg3 = "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un **{0}**! pour **{1}** <:game_die:791035424507691013>".format(rolled2,adv_usr.display_name)
         if rolled1 < rolled2:
-            msg4 = "<:game_die:791035424507691013> Le gagnant est **{0}**! **{1}** doit **{2}** kakeras à **{0}** <:game_die:791035424507691013>".format(
-                aut_usr.display_name,adv_usr.display_name, rolled2 - rolled1)
+            if(rolled2 - rolled1 >= upper/2):
+                "<:game_die:791035424507691013> Le gagnant est **{0}**! **{1}** s'est bien fait baiser et doit **{2}** kakeras à **{0}** <:game_die:791035424507691013>".format(
+                    aut_usr.display_name, adv_usr.display_name, rolled2 - rolled1)
+            else:
+                msg4 = "<:game_die:791035424507691013> Le gagnant est **{0}**! **{1}** doit **{2}** kakeras à **{0}** <:game_die:791035424507691013>".format(
+                    aut_usr.display_name,adv_usr.display_name, rolled2 - rolled1)
+        elif rolled2 < rolled1:
+            if(rolled1 - rolled2 > upper/2):
+                msg4 = "<:game_die:791035424507691013> Le gagnant est **{0}**! **{1}** s'est bien fait baiser et doit **{2}** kakeras à **{0}** <:game_die:791035424507691013>".format(
+                    adv_usr.display_name, aut_usr.display_name, rolled1 - rolled2)
+            else:
+                msg4 = "<:game_die:791035424507691013> Le gagnant est **{0}**! **{1}** doit **{2}** kakeras à **{0}** <:game_die:791035424507691013>".format(
+                    adv_usr.display_name,aut_usr.display_name, rolled1 - rolled2)
         else:
-            msg4 = "<:game_die:791035424507691013> Le gagnant est **{0}**! **{1}** doit **{2}** kakeras à **{0}** <:game_die:791035424507691013>".format(
-                adv_usr.display_name,aut_usr.display_name, rolled1 - rolled2)
+            msg4 = "<:8219_cheems:720974989490389043> égalité pas de gagnant <:8219_cheems:720974989490389043>"
         await message.channel.send(msg1)
         await sleep(2)
         await message.channel.send(msg2)

@@ -9,7 +9,7 @@ from datetime               import *
 class senduptime(BaseEvent):
 
     def __init__(self):
-        interval_minutes = 30  # Set the interval for this event
+        interval_minutes = 60  # Set the interval for this event
         self.startime = datetime.now()
         super().__init__(interval_minutes)
 
@@ -18,6 +18,6 @@ class senduptime(BaseEvent):
     async def run(self, client):
         now = datetime.now()
         uptime = now - self.startime
-        msg = f"Le bot tourne depuis {str(uptime).split('.', 2)[0]}"
+        msg = f"J'ai été démarré il y a {str(uptime).split('.', 2)[0]}"
         channel = get_channel(client, "débug")
         await channel.send(msg)
