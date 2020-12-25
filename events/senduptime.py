@@ -18,6 +18,6 @@ class senduptime(BaseEvent):
     async def run(self, client):
         now = datetime.now()
         uptime = now - self.startime
-        msg = f"J'ai été démarré il y a {str(uptime).split('.', 2)[0]}"
+        msg = f"J'ai été démarré il y a **{str(uptime).split('.', 2)[0]}**"
         channel = get_channel(client, "botactivity")
         await channel.send(msg)

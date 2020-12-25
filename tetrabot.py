@@ -88,15 +88,15 @@ def main():
         deleted = get_channel(client, "deleted")
         for i in message.embeds:
             await deleted.send(embed = i)
-        await deleted.send(f"\"{message.content}\" écrit par {message.author} a été supprimé")
+        await deleted.send(f"*{message.content}* écrit par **{message.author}** a été supprimé")
 
     @client.event
     async def on_voice_state_update(member, before, after):
         voice = get_channel(client, "voice")
         if (after.channel == None):
-            await voice.send(f"\"{member}\" s'est déconnecté de {before.channel}")
+            await voice.send(f"**{member}** s'est déconnecté de {before.channel}")
         else:
-            await voice.send(f"\"{member}\" à rejoint le salon {after.channel}")
+            await voice.send(f"**{member}** à rejoint le salon {after.channel}")
 
     # Finally, set the bot running
     client.run(settings.BOT_TOKEN)

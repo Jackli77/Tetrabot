@@ -14,6 +14,6 @@ class Waifu_time(BaseCronEvent):
     # Override the run() method
     async def run(self, client):
         now = datetime.now()
-        msg = f"<@&582978303086952452> Il est maintenant {now.hour}:{now.minute}, autrement dit l'heure des waifus"
+        msg = f"<@&582978303086952452> Il est maintenant **{now.hour}:{now.minute}**, autrement dit l'heure des waifus"
         channel = get_channel(client, "waifu")
         await channel.send(msg)
