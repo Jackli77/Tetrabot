@@ -94,9 +94,9 @@ def main():
     async def on_voice_state_update(member, before, after):
         voice = get_channel(client, "voice")
         if (after.channel == None):
-            await voice.send(f"**{member}** s'est déconnecté de {before.channel}")
+            await voice.send(f"**{member}** s'est déconnecté de **{before.channel}**")
         else:
-            await voice.send(f"**{member}** à rejoint le salon {after.channel}")
+            await voice.send(f"**{member}** à rejoint le salon **{after.channel}**")
 
     # Finally, set the bot running
     client.run(settings.BOT_TOKEN)
