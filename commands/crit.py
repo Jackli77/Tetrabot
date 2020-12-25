@@ -66,7 +66,7 @@ class crit(BaseCommand):
         await bet_msg.add_reaction('✅')
 
         def check(reaction, user):
-            return str(reaction.emoji) == '✅' and reaction.message == bet_msg and not user.bot and user != client.author
+            return str(reaction.emoji) == '✅' and reaction.message == bet_msg and not user.bot
 
         try:
             reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
