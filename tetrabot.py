@@ -37,7 +37,7 @@ def main():
             return
 
         this.running = True
-        botactivity = get_channel(client, "debug")
+        botactivity = get_channel(client, "botactivity")
         await botactivity.send(f"Le bot est pret!")
         # Set the playing status
         if settings.NOW_PLAYING:
@@ -85,14 +85,14 @@ def main():
 
     @client.event
     async def on_message_delete(message):
-        deleted = get_channel(client, "debug")
+        deleted = get_channel(client, "deleted")
         for i in message.embeds:
             await deleted.send(embed = i)
         await deleted.send(f"\"{message.content}\" écrit par {message.author} a été supprimé")
 
     @client.event
     async def on_voice_state_update(member, before, after):
-        voice = get_channel(client, "debug")
+        voice = get_channel(client, "voice")
         if (after.channel == None):
             await voice.send(f"\"{member}\" s'est déconnecté de {before.channel}")
         else:
