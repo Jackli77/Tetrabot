@@ -25,7 +25,7 @@ class top(BaseCommand):
             channel = message.channel
             await channel.send('Send me that 👍 reaction, mate')
             def check(reaction, user):
-                return user == message.author and str(reaction.emoji) == '👍'
+                return str(reaction.emoji) == '👍'
             try:
                 reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
             except asyncio.TimeoutError:

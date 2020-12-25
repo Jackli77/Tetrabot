@@ -8,11 +8,11 @@ from numpy.random import randint
 # Keep in mind that the command name will be derived from the class name
 # but in lowercase
 # So, a command class named Random will generate a 'random' command
-class crimt(BaseCommand):
+class oldcrit(BaseCommand):
 
     def __init__(self):
         # A quick description for the help message
-        description = "Challenge @user à un chafer crimt"
+        description = "Challenge @user à un chafer crit (deprecated)"
         # A list of parameters that the command will take as input
         # Parameters will be separated by spaces and fed to the 'params'
         # argument in the handle() method
@@ -39,13 +39,13 @@ class crimt(BaseCommand):
             return
         if argent < 0:
             await message.channel.send(
-                "{0}, Quid d'écrire des nombres négatifs ?".format(message.author.mention))
+                "{0}, Rentre un nombre positif?".format(message.author.mention))
             return
         aut_id = int(''.join(filter(str.isdigit, message.author.mention)))
         ad_id = int(''.join(filter(str.isdigit, adversaire)))
         adv_usr = await Client.fetch_user(client, ad_id)
         aut_usr = await Client.fetch_user(client, aut_id)
-        msg0 = "**{}** challenge **{}** à un duel de chafer crimt!".format(aut_usr.mention,adv_usr.mention)
+        msg0 = "**{}** challenge **{}** à un duel de chafer crit!".format(aut_usr.mention,adv_usr.mention)
         msg1 = "**{} Coup critique!**<:bangbang:791122260046905355>".format(aut_usr.display_name)
         msg2 = "**{} Coup critique!**<:bangbang:791122260046905355>".format(adv_usr.display_name)
         msg3 = "Pas de chance, **{}** <:8219_cheems:720974989490389043>".format(aut_usr.display_name)
@@ -57,7 +57,7 @@ class crimt(BaseCommand):
             await message.channel.send("__**Manche {}**__".format(manche))
 
             await sleep(2)
-            crited1 = randint(0, 6) < 5
+            crited1 = randint(0, 100) < 15
             if crited1:
                 crit1 += 1
                 await message.channel.send(msg1)
@@ -65,7 +65,7 @@ class crimt(BaseCommand):
                 await message.channel.send(msg3)
 
             await sleep(2)
-            crited2 = randint(0, 6) < 5
+            crited2 = randint(0, 100) < 15
             if crited2:
                 crit2 += 1
                 await message.channel.send(msg2)
@@ -76,7 +76,7 @@ class crimt(BaseCommand):
                 await message.channel.send(msg4)
 
         await sleep(2)
-        msg5 = "Le duel s'est terminée après **{}** manches et **{}** égalités".format(manche, min(crit1, crit2))
+        msg5 = "Le duel s'est terminé après **{}** manches et **{}** égalités".format(manche, min(crit1, crit2))
         msg6 = "Le gagnant est **{0}**, **{1}** doit donner **{2}** à **{0}** <:money_with_wings:791121758774231050>".format(aut_usr.display_name, adv_usr.display_name, argent)
         msg7 = "Le gagnant est **{0}**, **{1}** doit donner **{2}** à **{0}** <:money_with_wings:791121758774231050>".format(adv_usr.display_name, aut_usr.display_name, argent)
         if crit1 > crit2:
