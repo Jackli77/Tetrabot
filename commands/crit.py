@@ -17,7 +17,7 @@ class crit(BaseCommand):
         crit1 = 0
         crit2 = 0
         odds = 15
-        slep = 2
+        slep = 1
         aut_id = int(''.join(filter(str.isdigit, message.author.mention)))
         aut_usr = await Client.fetch_user(client, aut_id)
         if len(params) > 1:
@@ -27,7 +27,7 @@ class crit(BaseCommand):
             except ValueError:
                 await channel.send("Précise la somme mise en jeu")
                 return
-            if argent < 0 or 90 < odds < 10:
+            if argent < 0 or 10 > odds or odds > 90:
                 await channel.send(
                     "{}, Value error: pas de nombres négatfis, odds compris entre 10 et 90".format(aut_usr.mention))
                 return
@@ -65,8 +65,6 @@ class crit(BaseCommand):
         while crit1 == crit2:
             await sleep(slep)
             manche += 1
-            if(manche == 5):
-                slep = 1
             await channel.send("__**Manche {}**__".format(manche))
 
             await sleep(slep)
