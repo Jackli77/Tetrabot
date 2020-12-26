@@ -66,24 +66,6 @@ def main():
         sched.start()
         print(f"{n_ev} events loaded", flush=True)
 
-    async def createMutedRole(message):
-        mutedRole = await message.guild.create_role(name="Muted",
-                                                    permissions=discord.Permissions(
-                                                        send_messages=False,
-                                                        speak=False),
-                                                    reason="Creation du role Muted pour mute des gens.")
-        for channel in message.guild.channels:
-            await channel.set_permissions(mutedRole, send_messages=False, speak=False)
-        return mutedRole
-
-    async def getMutedRole(message):
-        roles = message.guild.roles
-        for role in roles:
-            if role.name == "Muted":
-                return role
-
-        return await createMutedRole(message)
-
     # The message handler for both new message and edits
     async def common_handle_message(message):
         text = message.content
@@ -96,6 +78,23 @@ def main():
                 print("Error while handling message", flush=True)
                 raise
 
+    async def createMutedRole(ctx):
+        mutedRole = await ctx.guild.create_role(name="Muted",
+                                                permissions=discord.Permissions(
+                                                    send_messages=False,
+                                                    speak=False),
+                                                reason="Creation du role Muted pour mute des gens.")
+        for channel in ctx.guild.channels:
+            await channel.set_permissions(mutedRole, send_messages=False, speak=False)
+        return mutedRole
+
+    async def getMutedRole(ctx):
+        roles = ctx.guild.roles
+        for role in roles:
+            if role.name == "Muted":
+                return role
+
+        return await createMutedRole(ctx)
     @client.event
     async def on_message(message):
         await common_handle_message(message)
@@ -122,8 +121,28 @@ def main():
         elif str(after.channel) != str(before.channel):
             await voice.send(f"**{member}** à rejoint le salon **{after.channel}**")
 
+    @client.event
+    async def createMutedRole(message):
+        mutedRole = await message.guild.create_role(name="Muted",
+                                                    permissions=discord.Permissions(
+                                                        send_messages=False,
+                                                        speak=False),
+                                                    reason="Creation du role Muted pour mute des gens.")
+        for channel in message.guild.channels:
+            await channel.set_permissions(mutedRole, send_messages=False, speak=False)
+        return mutedRole
+
+    async def getMutedRole(message):
+        roles = message.guild.roles
+        for role in roles:
+            if role.name == "Muted":
+                return role
+
+        return await createMutedRole(message)
     # Finally, set the bot running
     client.run(settings.BOT_TOKEN)
+
+
 
 
 ###############################################################################
