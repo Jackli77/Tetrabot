@@ -11,7 +11,9 @@ from commands.base_command import BaseCommand
 from discord.ext import commands
 from discord.ext.commands import bot
 
-from TetraScript.main import getMutedRole
+from Tetrabot.tetrabot import getMutedRole
+
+bot = commands.Bot(command_prefix="!")
 
 
 class mute(BaseCommand):
@@ -28,6 +30,7 @@ class mute(BaseCommand):
 
     # Override the handle() method
     # It will be called every time the command is received
+
     @commands.has_role('Admin')
     async def handle(self, member: discord.Member, message, *, reason="no reason"):
         mutedRole = await getMutedRole(message)

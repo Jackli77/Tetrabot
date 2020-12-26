@@ -66,6 +66,24 @@ def main():
         sched.start()
         print(f"{n_ev} events loaded", flush=True)
 
+    async def createMutedRole(message):
+        mutedRole = await message.guild.create_role(name="Muted",
+                                                    permissions=discord.Permissions(
+                                                        send_messages=False,
+                                                        speak=False),
+                                                    reason="Creation du role Muted pour mute des gens.")
+        for channel in message.guild.channels:
+            await channel.set_permissions(mutedRole, send_messages=False, speak=False)
+        return mutedRole
+
+    async def getMutedRole(message):
+        roles = message.guild.roles
+        for role in roles:
+            if role.name == "Muted":
+                return role
+
+        return await createMutedRole(message)
+
     # The message handler for both new message and edits
     async def common_handle_message(message):
         text = message.content
@@ -106,25 +124,6 @@ def main():
 
     # Finally, set the bot running
     client.run(settings.BOT_TOKEN)
-
-    @client.event
-    async def createMutedRole(message):
-        mutedRole = await message.guild.create_role(name="Muted",
-                                                    permissions=discord.Permissions(
-                                                        send_messages=False,
-                                                        speak=False),
-                                                    reason="Creation du role Muted pour mute des gens.")
-        for channel in message.guild.channels:
-            await channel.set_permissions(mutedRole, send_messages=False, speak=False)
-        return mutedRole
-
-    async def getMutedRole(message):
-        roles = message.guild.roles
-        for role in roles:
-            if role.name == "Muted":
-                return role
-
-        return await createMutedRole(message)
 
 
 ###############################################################################
