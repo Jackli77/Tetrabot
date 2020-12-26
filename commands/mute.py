@@ -3,7 +3,6 @@ from asyncio import sleep
 import discord
 from commands.base_command import BaseCommand
 
-
 # Your friendly example event
 # Keep in0 mind that the command name will be derived from the class name
 # but in lowercase:
@@ -30,8 +29,13 @@ class mute(BaseCommand):
     # Override the handle() method
     # It will be called every time the command is received
     @commands.has_role('Admin')
-    async def handle(self,member: discord.Member, message,*, reason="no reason"):
+    async def handle(self, member: discord.Member, message, *, reason="no reason"):
         mutedRole = await getMutedRole(message)
         await member.add_roles(mutedRole, reason=reason)
         await message.send(f"{member.mention} a été mute !")
 
+
+@mute.error
+async def mute_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send("T'es pas **Admin** clebard <:8219_cheems:720974989490389043>")
