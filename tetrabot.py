@@ -104,9 +104,6 @@ def main():
         elif str(after.channel) != str(before.channel):
             await voice.send(f"**{member}** à rejoint le salon **{after.channel}**")
 
-    # Finally, set the bot running
-    client.run(settings.BOT_TOKEN)
-
     @client.event
     async def createMutedRole(message):
         mutedRole = await message.guild.create_role(name="Muted",
@@ -125,6 +122,10 @@ def main():
                 return role
 
         return await createMutedRole(message)
+    # Finally, set the bot running
+    client.run(settings.BOT_TOKEN)
+
+
 
 
 ###############################################################################
