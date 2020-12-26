@@ -6,7 +6,7 @@ from commands.base_command import BaseCommand
 
 # Your friendly example event
 # Keep in0 mind that the command name will be derived from the class name
-# but in lowercase
+# but in lowercase:
 
 # So, a command class named Random will generate a 'random' command
 from discord.ext import commands
