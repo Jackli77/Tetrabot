@@ -77,24 +77,6 @@ def main():
             except:
                 print("Error while handling message", flush=True)
                 raise
-
-    async def createMutedRole(ctx):
-        mutedRole = await ctx.guild.create_role(name="Muted",
-                                                permissions=discord.Permissions(
-                                                    send_messages=False,
-                                                    speak=False),
-                                                reason="Creation du role Muted pour mute des gens.")
-        for channel in ctx.guild.channels:
-            await channel.set_permissions(mutedRole, send_messages=False, speak=False)
-        return mutedRole
-
-    async def getMutedRole(ctx):
-        roles = ctx.guild.roles
-        for role in roles:
-            if role.name == "Muted":
-                return role
-
-        return await createMutedRole(ctx)
     @client.event
     async def on_message(message):
         await common_handle_message(message)
