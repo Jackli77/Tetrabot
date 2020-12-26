@@ -11,7 +11,7 @@ from commands.base_command import BaseCommand
 from discord.ext import commands
 from discord.ext.commands import bot
 
-from Tetrabot.events.mute_event import getMutedRole
+from TetraScript.main import getMutedRole
 
 
 class unmute(BaseCommand):
