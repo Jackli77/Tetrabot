@@ -35,7 +35,6 @@ class unmute(BaseCommand):
         await ctx.send(f"{member.mention} a été unmute !")
 
 
-
 @unmute.error
 async def unmute_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
