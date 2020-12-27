@@ -25,9 +25,7 @@ class c(BaseCommand):
     # It will be called every time the command is received
     async def handle(self, params: int, message,client):
         max = int(params[0])
-        print(max)
         messages = await message.channel.history(limit=max + 1).flatten()
-        cpt = max + 1
         c = 0
         cleaning_msg = await message.channel.send("Cleaning...")
         for message in messages:
