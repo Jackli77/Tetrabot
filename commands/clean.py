@@ -34,7 +34,7 @@ class c(BaseCommand):
             c += 1
             await message.delete()
             await sleep(0.5)
-        if c > cpt:
+        if c == cpt:
             messages = await message.channel.history(limit=1).flatten()
             for message in messages:
                 await message.delete()
