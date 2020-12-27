@@ -29,12 +29,9 @@ class c(BaseCommand):
         messages = await message.channel.history(limit=max + 1).flatten()
         cpt = max + 1
         c = 0
-        await message.channel.send("Cleaning...")
+        cleaning_msg = await message.channel.send("Cleaning...")
         for message in messages:
             c += 1
             await message.delete()
             await sleep(0.5)
-        if c == cpt:
-            messages = await message.channel.history(limit=1).flatten()
-            for message in messages:
-                await message.delete()
+        await cleaning_msg.delete()
