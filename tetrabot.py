@@ -3,7 +3,7 @@ import sys
 import settings
 import discord
 import message_handler
-
+import dms_handler
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from events.base_event import BaseEvent
 from cronevents.base_cronevent import BaseCronEvent
@@ -69,14 +69,19 @@ def main():
     # The message handler for both new message and edits
     async def common_handle_message(message):
         text = message.content
+        if message.channel.id == message.author.dm_channel.id:
+            handle = dms_handler.handle_command
+        else:
+            handle = message_handler.handle_command
         if text.startswith(settings.COMMAND_PREFIX) and text != settings.COMMAND_PREFIX:
             cmd_split = text[len(settings.COMMAND_PREFIX):].split()
             try:
-                await message_handler.handle_command(cmd_split[0].lower(),
-                                                     cmd_split[1:], message, client)
+                await handle(cmd_split[0].lower(),
+                             cmd_split[1:], message, client)
             except:
                 print("Error while handling message", flush=True)
                 raise
+
     @client.event
     async def on_message(message):
         await common_handle_message(message)
@@ -104,10 +109,6 @@ def main():
             await voice.send(f"**{member}** à rejoint le salon **{after.channel}**")
 
     @client.event
-    async def on_typing(channel, user, when):
-        await channel.send(f"retourne taffer {user.display_name}")
-
-    @client.event
     async def createMutedRole(message):
         mutedRole = await message.guild.create_role(name="Muted",
                                                     permissions=discord.Permissions(
@@ -125,10 +126,9 @@ def main():
                 return role
 
         return await createMutedRole(message)
+
     # Finally, set the bot running
     client.run(settings.BOT_TOKEN)
-
-
 
 
 ###############################################################################
