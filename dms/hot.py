@@ -1,9 +1,6 @@
 import asyncio
-
 from discord import Client
 from dms.base_dm import BaseDm
-from asyncio import sleep
-from numpy.random import randint
 
 from utils import get_channel
 
