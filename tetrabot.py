@@ -104,6 +104,10 @@ def main():
             await voice.send(f"**{member}** à rejoint le salon **{after.channel}**")
 
     @client.event
+    async def on_typing(channel, user, when):
+        await channel.send(f"retourne taffer {user.display_name}")
+
+    @client.event
     async def createMutedRole(message):
         mutedRole = await message.guild.create_role(name="Muted",
                                                     permissions=discord.Permissions(
