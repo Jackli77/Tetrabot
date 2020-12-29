@@ -52,7 +52,7 @@ class gamble(BaseCommand):
             return
         rolled1 = randint(lower, upper+1)
         rolled2 = randint(lower, upper+1)
-        msg1 = "<:game_die:791035424507691013> {0} vs {1}. La roulette va de **{2}** à **{3}** <:game_die:791035424507691013>".format(message.author.mention, adversaire, lower, upper)
+        msg1 = "<:game_die:791035424507691013> {0} vs {1}. La roulette va de **{2}** à **{3}** <:game_die:791035424507691013>".format(message.author.mention, adv_usr.mention, lower, upper)
         msg2 = "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un **{0}**! pour **{1}** <:game_die:791035424507691013>".format(rolled1,aut_usr.display_name)
         msg3 = "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un **{0}**! pour **{1}** <:game_die:791035424507691013>".format(rolled2,adv_usr.display_name)
         if rolled1 < rolled2:
