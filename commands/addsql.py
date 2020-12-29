@@ -15,8 +15,6 @@ cur.execute("SELECT * FROM my_data")
 # Retrieve query results
 records = cur.fetchall()
 
-print(records)
-
 class addsql(BaseCommand):
 
     def __init__(self):
@@ -25,4 +23,4 @@ class addsql(BaseCommand):
         super().__init__(description, params)
 
     async def handle(self, params, message, client):
-        con
+        await message.channel.send(records)
