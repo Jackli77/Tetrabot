@@ -3,6 +3,7 @@ import settings
 import discord
 import message_handler
 import dms_handler
+import database_init
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from events.base_event import BaseEvent
 from cronevents.base_cronevent import BaseCronEvent
@@ -27,6 +28,8 @@ def main():
     # Initialize the client
     print("Starting up...")
     client = discord.Client()
+    print("Verifying database integrity...")
+    database_init.initialize()
 
     # Define event handlers for the client
     # on_ready may be called multiple times in the event of a reconnect,
