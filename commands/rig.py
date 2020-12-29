@@ -1,8 +1,5 @@
-import asyncio
 from discord import Client
 from commands.base_command import BaseCommand
-from asyncio import sleep
-from numpy.random import randint
 
 class rig(BaseCommand):
 

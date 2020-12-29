@@ -57,7 +57,7 @@ class gamble(BaseCommand):
         msg3 = "<:game_die:791035424507691013> La mère d'Hugo vient de tirer un **{0}**! pour **{1}** <:game_die:791035424507691013>".format(rolled2,adv_usr.display_name)
         if rolled1 < rolled2:
             if(rolled2 - rolled1 >= upper/2):
-                "<:game_die:791035424507691013> Le gagnant est **{0}**! **{1}** s'est bien fait baiser et doit **{2}** kakeras à **{0}** <:game_die:791035424507691013>".format(
+                msg4 ="<:game_die:791035424507691013> Le gagnant est **{0}**! **{1}** s'est bien fait baiser et doit **{2}** kakeras à **{0}** <:game_die:791035424507691013>".format(
                     aut_usr.display_name, adv_usr.display_name, rolled2 - rolled1)
             else:
                 msg4 = "<:game_die:791035424507691013> Le gagnant est **{0}**! **{1}** doit **{2}** kakeras à **{0}** <:game_die:791035424507691013>".format(

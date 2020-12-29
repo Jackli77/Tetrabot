@@ -1,5 +1,4 @@
 import sys
-
 import settings
 import discord
 import message_handler
