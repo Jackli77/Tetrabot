@@ -1,3 +1,5 @@
+import asyncio
+
 from discord import Client
 
 from commands.base_command import BaseCommand
@@ -17,32 +19,37 @@ class gamble(BaseCommand):
         # Parameters will be separated by spaces and fed to the 'params'
         # argument in the handle() method
         # If no params are expected, leave this list empty or set it to None
-        params = ["adversaire","limite"]
+        params = ["limite"]
         super().__init__(description, params)
 
     # Override the handle() method
     # It will be called every time the command is received
     async def handle(self, params, message, client):
-        # 'params' is a list that contains the parameters that the command
-        # expects to receive, t is guaranteed to have AT LEAST as many
-        # parameters as specified in __init__
-        # 'message' is the discord.py Message object for the command to handle
-        # 'client' is the bot Client object
+        channel = message.channel
         lower = 1
         try:
-            adversaire = params[0]
-            upper = int(params[1])
+            upper = int(params[0])
         except ValueError:
-            await message.channel.send("Mentionne qqun puis écris la somme maximale séparée d'un espace")
+            await channel.send("Ecris la somme maximale séparée d'un espace")
             return
         if lower > upper:
-            await message.channel.send(
+            await channel.send(
                 "{0}, rentre un nombre strictement positif".format(message.author.mention))
             return
         aut_id = int(''.join(filter(str.isdigit, message.author.mention)))
-        ad_id = int(''.join(filter(str.isdigit,adversaire)))
-        adv_usr = await Client.fetch_user(client,ad_id)
-        aut_usr = await Client.fetch_user(client,aut_id)
+        aut_usr = await Client.fetch_user(client, aut_id)
+        msg0 = "**{}** lance un gamble cappé à **{}**".format(aut_usr.mention, upper)
+        bet_msg = await channel.send(msg0)
+        await bet_msg.add_reaction('✅')
+        def check(reaction, user):
+            return str(reaction.emoji) == '✅' and reaction.message == bet_msg and not user.bot
+
+        try:
+            reaction, user = await client.wait_for('reaction_add', timeout=45.0, check=check)
+            adv_usr = user
+        except asyncio.TimeoutError:
+            await channel.send('Timeout')
+            return
         rolled1 = randint(lower, upper+1)
         rolled2 = randint(lower, upper+1)
         msg1 = "<:game_die:791035424507691013> {0} vs {1}. La roulette va de **{2}** à **{3}** <:game_die:791035424507691013>".format(message.author.mention, adversaire, lower, upper)
