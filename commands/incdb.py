@@ -38,4 +38,6 @@ class incdb(BaseCommand):
                     """,
                     {'id': aut_id})
         records = cur.fetchall()
+        conn.commit()
+        cur.close()
         await message.channel.send(f"Your score is now {records[0][0]}")
