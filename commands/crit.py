@@ -4,6 +4,9 @@ from commands.base_command import BaseCommand
 from asyncio import sleep
 from numpy.random import randint
 
+from commands.incdb import incdb
+
+
 class crit(BaseCommand):
 
     def __init__(self):
@@ -95,5 +98,9 @@ class crit(BaseCommand):
             adv_usr.display_name, aut_usr.display_name, argent)
         if crit1 > crit2:
             await channel.send(msg5 + "\n" + msg6)
+            incdb(aut_id, argent)
+            incdb(adv_usr.id, -argent)
         else:
             await channel.send(msg5 + "\n" + msg7)
+            incdb(aut_id, argent)
+            incdb(adv_usr.id, -argent)
