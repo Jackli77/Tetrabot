@@ -21,20 +21,23 @@ class incscore(BaseCommand):
             return e[2]
         records.sort(reverse=True,key=order)
         cur.close()
-        page1 = discord.Embed(title="Classement Tetrapodes", color=0x00ff00)
+        page1 = discord.Embed(title="Classement Tetrapodes", colour=discord.Colour.lighter_grey())
         usr = await discord.Client.fetch_user(client, records[0][3])
         page1.set_thumbnail(url=usr.avatar_url)
         page1.add_field(name="Membres", value="\n ".join(f"**{member[0]}** -- score:**{member[1]}** -- Equité:**{member[2]}**" for member in records), inline=False)
         page2 = discord.Embed(
-            title='Page 2/3',
-            description='Description',
-            colour=discord.Colour.orange()
+            title='Grand gagnant',
+            description=f'**{records[0][0]}** avec une équité de **{records[0][2]}**',
+            colour=discord.Colour.green()
         )
+        page2.set_thumbnail(url=usr.avatar_url)
         page3 = discord.Embed(
-            title='Page 3/3',
-            description='Description',
-            colour=discord.Colour.orange()
+            title='Grand perdant',
+            description=f'**{records[-1][0]}** avec une équité de **{records[-1][2]}**',
+            colour=discord.Colour.red()
         )
+        lsr = await discord.Client.fetch_user(client, records[-1][3])
+        page3.set_thumbnail(url=lsr.avatar_url)
 
         pages = [page1, page2, page3]
 
