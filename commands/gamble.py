@@ -81,5 +81,9 @@ class gamble(BaseCommand):
         await message.channel.send(msg3)
         await sleep(2)
         await message.channel.send(msg4)
-        incdb(aut_id, rolled2 - rolled1)
-        incdb(adv_usr.id, rolled1 - rolled2)
+        rec1 = incdb(aut_id, rolled2 - rolled1)
+        rec2 = incdb(adv_usr.id, rolled1 - rolled2)
+        await message.channel.send(
+            f"**{aut_usr.display_name}** a un score de **{rec1[0][0]}** et une équité de **{rec1[0][1]}**")
+        await message.channel.send(
+            f"**{adv_usr.display_name}** a un score de **{rec2[0][0]}** et une équité de **{rec2[0][1]}**")
