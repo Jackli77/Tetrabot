@@ -1,7 +1,6 @@
 import asyncio
 
 import discord
-from discord import Client, Embed
 from commands.base_command import BaseCommand
 from database_init import conn
 
@@ -16,14 +15,16 @@ class incscore(BaseCommand):
     async def handle(self, params, message, client):
         cur = conn.cursor()
         channel = message.channel
-        cur.execute("SELECT username,val,equity FROM users")
+        cur.execute("SELECT username,val,equity,userid FROM users")
         records = cur.fetchall()
         def order(e):
-            return e[1]
+            return e[2]
         records.sort(reverse=True,key=order)
         cur.close()
-        page1 = discord.Embed(title="Server name", color=0x00ff00)
-        page1.add_field(name="Member List:", value="\n ".join(f"**{member[0]}** -- **{member[1]}** -- Equité:**{member[2]}**" for member in records), inline=False)
+        page1 = discord.Embed(title="Classement Tetrapodes", color=0x00ff00)
+        usr = await discord.Client.fetch_user(client, records[0][3])
+        page1.set_thumbnail(url=usr.avatar_url)
+        page1.add_field(name="Membres", value="\n ".join(f"**{member[0]}** -- score:**{member[1]}** -- Equité:**{member[2]}**" for member in records), inline=False)
         page2 = discord.Embed(
             title='Page 2/3',
             description='Description',
@@ -37,7 +38,7 @@ class incscore(BaseCommand):
 
         pages = [page1, page2, page3]
 
-        msg_pg1 = await message.channel.send(embed=page1)
+        msg_pg1 = await channel.send(embed=page1)
 
         await msg_pg1.add_reaction('⏮')
         await msg_pg1.add_reaction('◀')
