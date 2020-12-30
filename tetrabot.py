@@ -28,8 +28,6 @@ def main():
     # Initialize the client
     print("Starting up...")
     client = discord.Client()
-    print("Verifying database integrity...")
-    database_init.initialize()
 
     # Define event handlers for the client
     # on_ready may be called multiple times in the event of a reconnect,
@@ -42,6 +40,8 @@ def main():
         this.running = True
         botactivity = get_channel(client, "botactivity")
         await botactivity.send(f"Le bot est pret!")
+        print("Verifying database integrity...")
+        await database_init.initialize(client)
         # Set the playing status
         if settings.NOW_PLAYING:
             print("Setting NP game", flush=True)
