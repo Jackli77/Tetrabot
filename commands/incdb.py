@@ -19,10 +19,12 @@ def incdb(aut_id,gain):
     cur.execute("""
                 UPDATE users 
                 SET val = val + 1 
+                WHERE userid = %(id)s;
+                UPDATE users
                 SET equity = equity + %(gain)s
-                WHERE userid = %(id)s
+                WHERE userid = %(id)s;
                 """,
-                {'id': aut_id,'gain' : gain})
+                {'id': aut_id, 'gain': gain})
     # Retrieve query results
     cur.execute("""
                         SELECT val,equity FROM users WHERE userid = %(id)s

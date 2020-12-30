@@ -10,6 +10,9 @@ from numpy.random import randint
 # Keep in mind that the command name will be derived from the class name
 # but in lowercase
 # So, a command class named Random will generate a 'random' command
+from commands.incdb import incdb
+
+
 class gamble(BaseCommand):
 
     def __init__(self):
@@ -78,3 +81,5 @@ class gamble(BaseCommand):
         await message.channel.send(msg3)
         await sleep(2)
         await message.channel.send(msg4)
+        incdb(aut_id, rolled2 - rolled1)
+        incdb(adv_usr.id, rolled1 - rolled2)
