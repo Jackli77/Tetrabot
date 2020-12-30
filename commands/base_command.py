@@ -1,7 +1,5 @@
 import settings
 
-# Base command class
-# Do not modify!
 class BaseCommand:
 
     def __init__(self, description, params):

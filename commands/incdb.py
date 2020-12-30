@@ -1,9 +1,8 @@
 from discord import Client
 from commands.base_command import BaseCommand
-import database_init
 from database_init import conn
 
-class incdb(BaseCommand):
+class inc(BaseCommand):
 
     def __init__(self):
         description = "Increments the counter of a SQL database"
@@ -34,10 +33,10 @@ class incdb(BaseCommand):
             {'id' : aut_id})
         # Retrieve query results
         cur.execute("""
-                    SELECT val FROM users WhERE userid = %(id)s
+                    SELECT val FROM users WHERE userid = %(id)s
                     """,
                     {'id': aut_id})
         records = cur.fetchall()
         conn.commit()
         cur.close()
-        await message.channel.send(f"Your score is now {records[0][0]}")
+        await message.channel.send(f"**{aut_usr.display_name}** a un score de {records[0][0]}")
