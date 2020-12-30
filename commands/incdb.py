@@ -47,4 +47,4 @@ class inc(BaseCommand):
         aut_id = int(''.join(filter(str.isdigit, message.author.mention)))
         aut_usr = await Client.fetch_user(client, aut_id)
         records = incdb(aut_id,0)
-        await message.channel.send(f"**{aut_usr.display_name}** a un score de {records[0][0]} et une équité de **{records[0][1]}**")
+        await message.channel.send(f"**{aut_usr.display_name}** a un score de **{records[0][0]}** et une équité de **{records[0][1]}**")

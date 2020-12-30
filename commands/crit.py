@@ -98,9 +98,17 @@ class crit(BaseCommand):
             adv_usr.display_name, aut_usr.display_name, argent)
         if crit1 > crit2:
             await channel.send(msg5 + "\n" + msg6)
-            incdb(aut_id, argent)
-            incdb(adv_usr.id, -argent)
+            rec1 = incdb(aut_id, argent)
+            rec2 = incdb(adv_usr.id, -argent)
+            await message.channel.send(
+                f"**{aut_usr.display_name}** a un score de **{rec1[0][0]}** et une équité de **{rec1[0][1]}**")
+            await message.channel.send(
+                f"**{adv_usr.display_name}** a un score de **{rec2[0][0]}** et une équité de **{rec2[0][1]}**")
         else:
             await channel.send(msg5 + "\n" + msg7)
-            incdb(aut_id, argent)
-            incdb(adv_usr.id, -argent)
+            rec1 = incdb(aut_id, argent)
+            rec2 = incdb(adv_usr.id, -argent)
+            await message.channel.send(
+                f"**{aut_usr.display_name}** a un score de **{rec1[0][0]}** et une équité de **{rec1[0][1]}**")
+            await message.channel.send(
+                f"**{adv_usr.display_name}** a un score de **{rec2[0][0]}** et une équité de **{rec2[0][1]}**")
