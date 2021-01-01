@@ -66,4 +66,4 @@ class inc(BaseCommand):
         aut_usr = await Client.fetch_user(client, aut_id)
         records = incdb(aut_id,0)
         wr = winrate(records[0][2],records[0][3])
-        await message.channel.send(f"**{aut_usr.display_name}** score:**{records[0][0]}** équité:**{records[0][1]}** WR:**{wr}%**")
+        await message.channel.send(f"**{aut_usr.display_name}** score:**{records[0][0]}** équité:**{records[0][1]}** WR:**{records[0][2]}/{records[0][3]} {wr}%**")

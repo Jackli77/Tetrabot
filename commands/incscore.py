@@ -25,16 +25,16 @@ class incscore(BaseCommand):
         page1 = discord.Embed(title="Classement Tetrapodes", colour=discord.Colour.lighter_grey())
         usr = await discord.Client.fetch_user(client, records[0][4])
         page1.set_thumbnail(url=usr.avatar_url)
-        page1.add_field(name="Membres", value="\n ".join(f"**{member[0]}** -- WR:**{winrate(member[2],member[3])}%** -- Equité:**{member[1]}**" for member in records), inline=False)
+        page1.add_field(name="Membres", value="\n ".join(f"**{member[0]}** -- WR:**{member[2]}/{member[3]} {winrate(member[2],member[3])}%** -- Equité:**{member[1]}**" for member in records), inline=False)
         page2 = discord.Embed(
             title='Grand gagnant',
-            description=f'**{records[0][0]}** avec une équité de **{records[0][1]}** et un winrate de **{winrate(records[0][2],records[0][3])}%**',
+            description=f'**{records[0][0]}** avec une équité de **{records[0][1]}** et un winrate de **{records[0][2]}/{records[0][3]} {winrate(records[0][2],records[0][3])}%**',
             colour=discord.Colour.green()
         )
         page2.set_thumbnail(url=usr.avatar_url)
         page3 = discord.Embed(
             title='Grand perdant',
-            description=f'**{records[-1][0]}** avec une équité de **{records[-1][1]}** et un winrate de **{winrate(records[-1][2],records[-1][3])}%**',
+            description=f'**{records[-1][0]}** avec une équité de **{records[-1][1]}** et un winrate de **{records[-1][2]}/{records[-1][3]} {winrate(records[-1][2],records[-1][3])}%**',
             colour=discord.Colour.red()
         )
         lsr = await discord.Client.fetch_user(client, records[-1][4])
