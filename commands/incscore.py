@@ -22,7 +22,7 @@ class incscore(BaseCommand):
             return e[1]
         records.sort(reverse=True,key=order)
         cur.close()
-        page1 = discord.Embed(title="Classement Tetrapodes", colour=discord.Colour.lighter_grey())
+        page1 = discord.Embed(title="Classement d'equité", colour=discord.Colour.lighter_grey())
         usr = await discord.Client.fetch_user(client, records[0][4])
         page1.set_thumbnail(url=usr.avatar_url)
         page1.add_field(name="Membres", value="\n ".join(f"**{member[0]}** -- WR:**{member[2]}/{member[3]} {winrate(member[2],member[3])}%** -- Equité:**{member[1]}**" for member in records), inline=False)

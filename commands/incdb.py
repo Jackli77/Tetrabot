@@ -33,16 +33,18 @@ def incdb(aut_id,gain):
                 {'id': aut_id, 'gain': gain})
     if gain < 0:
         cur.execute("""
-                UPDATE users 
-                SET loss = loss + 1 
-                WHERE userid = %(id)s;
-                """)
+                    UPDATE users 
+                    SET loss = loss + 1 
+                    WHERE userid = %(id)s;
+                    """,
+                    {'id': aut_id})
     elif gain > 0:
         cur.execute("""
                     UPDATE users                         
                     SET win = win + 1 
                     WHERE userid = %(id)s;
-                    """)
+                    """,
+                    {'id': aut_id})
     # Retrieve query results
     cur.execute("""
                         SELECT val,equity,win,loss FROM users WHERE userid = %(id)s
