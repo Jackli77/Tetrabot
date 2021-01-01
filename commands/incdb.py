@@ -2,6 +2,12 @@ from discord import Client
 from commands.base_command import BaseCommand
 from database_init import conn
 
+def winrate(win,loss):
+    if win == 0:
+        return 0
+    else:
+        return 100 * win // (win + loss)
+
 def incdb(aut_id,gain):
     cur = conn.cursor()
     cur.execute(
@@ -25,9 +31,21 @@ def incdb(aut_id,gain):
                 WHERE userid = %(id)s;
                 """,
                 {'id': aut_id, 'gain': gain})
+    if gain < 0:
+        cur.execute("""
+                UPDATE users 
+                SET loss = loss + 1 
+                WHERE userid = %(id)s;
+                """)
+    elif gain > 0:
+        cur.execute("""
+                    UPDATE users                         
+                    SET win = win + 1 
+                    WHERE userid = %(id)s;
+                    """)
     # Retrieve query results
     cur.execute("""
-                        SELECT val,equity FROM users WHERE userid = %(id)s
+                        SELECT val,equity,win,loss FROM users WHERE userid = %(id)s
                         """,
                 {'id': aut_id})
     records = cur.fetchall()
@@ -47,4 +65,5 @@ class inc(BaseCommand):
         aut_id = int(''.join(filter(str.isdigit, message.author.mention)))
         aut_usr = await Client.fetch_user(client, aut_id)
         records = incdb(aut_id,0)
-        await message.channel.send(f"**{aut_usr.display_name}** a un score de **{records[0][0]}** et une équité de **{records[0][1]}**")
+        wr = winrate(records[0][2],records[0][3])
+        await message.channel.send(f"**{aut_usr.display_name}** score:**{records[0][0]}** équité:**{records[0][1]}** WR:**{wr}%**")
