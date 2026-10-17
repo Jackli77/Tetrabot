@@ -143,16 +143,26 @@ async def cmd_gamble(ctx: CommandContext, opponent: discord.User, upper: int):
     result = duels.resolve_gamble(ctx.user_id, opponent.id, upper, rolls)
     if result.is_tie:
         await ctx.respond(content=fmt.render_gamble_tie())
-        return
-
-    won = result.winner_id == ctx.user_id
-    winner, loser = (challenger, opponent) if won else (opponent, challenger)
-    await ctx.respond(
-        content=fmt.render_gamble_winner(
-            winner.display_name, loser.display_name, result.diff, result.decisive
+        # A tie still counts as a game played for both players: gain=0 leaves
+        # equity/win/loss untouched but the games-played counter ticks
+        # (same behaviour as the pre-refactor incdb helper).
+        challenger_rec = await record_result(ctx.user_id, 0)
+        opponent_rec = await record_result(opponent.id, 0)
+    else:
+        won = result.winner_id == ctx.user_id
+        winner, loser = (challenger, opponent) if won else (opponent, challenger)
+        await ctx.respond(
+            content=fmt.render_gamble_winner(
+                winner.display_name, loser.display_name, result.diff, result.decisive
+            )
         )
-    )
-    challenger_rec = await record_result(ctx.user_id, result.diff if won else -result.diff)
+        # Persist BOTH sides of the wager: the winner gains the difference,
+        # the loser loses it (mirrors cmd_crit so equity always balances).
+        challenger_rec = await record_result(ctx.user_id, result.diff if won else -result.diff)
+        opponent_rec = await record_result(opponent.id, -result.diff if won else result.diff)
+
+    await ctx.respond(content=fmt.render_score(challenger.display_name, challenger_rec))
+    await ctx.respond(content=fmt.render_score(opponent.display_name, opponent_rec))
 
 
 async def cmd_crit(ctx: CommandContext, opponent: discord.User, argent: int, odds: int):
@@ -215,7 +225,3 @@ async def cmd_help(ctx: CommandContext):
     from message_handler import COMMAND_HANDLERS
 
     await ctx.respond(embed=fmt.render_help(ctx.prefix, COMMAND_HANDLERS, DMS_HANDLERS))
-
-    opponent_rec = await record_result(opponent.id, -result.diff if won else result.diff)
-    await ctx.respond(content=fmt.render_score(challenger.display_name, challenger_rec))
-    await ctx.respond(content=fmt.render_score(opponent.display_name, opponent_rec))
