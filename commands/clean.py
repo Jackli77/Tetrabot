@@ -10,7 +10,7 @@ class c(BaseCommand):
 
     async def handle(self, params: int, message,client):
         max = int(params[0])
-        messages = await message.channel.history(limit=max + 1).flatten()
+        messages = [m async for m in message.channel.history(limit=max + 1)]
         c = 0
         cleaning_msg = await message.channel.send("Cleaning...")
         for message in messages:

@@ -2,8 +2,9 @@ import asyncio
 
 import discord
 from commands.base_command import BaseCommand
-from database_init import conn
+from database_init import users
 from commands.incdb import winrate
+
 
 class incscore(BaseCommand):
 
@@ -12,36 +13,56 @@ class incscore(BaseCommand):
         params = []
         super().__init__(description, params)
 
-
     async def handle(self, params, message, client):
-        cur = conn.cursor()
         channel = message.channel
-        cur.execute("SELECT username,equity,win,loss,userid FROM users")
-        records = cur.fetchall()
-        def order(e):
-            return e[1]
-        records.sort(reverse=True,key=order)
-        cur.close()
+
+        # Fetch all users sorted by equity descending
+        records = await users.find().sort("equity", -1).to_list(length=None)
+
+        if not records:
+            await channel.send("Aucun joueur enregistré.")
+            return
+
         page1 = discord.Embed(title="Classement d'equité", colour=discord.Colour.lighter_grey())
-        usr = await discord.Client.fetch_user(client, records[0][4])
-        page1.set_thumbnail(url=usr.avatar_url)
-        page1.add_field(name="Membres", value="\n ".join(f"**{member[0]}** - **WR:**{member[2]}/{member[3]} {winrate(member[2],member[3])}% - **Equité:**{member[1]}" for member in records), inline=False)
+        top_usr = await client.fetch_user(records[0]["_id"])
+        page1.set_thumbnail(url=top_usr.display_avatar.url)
+        page1.add_field(
+            name="Membres",
+            value="\n ".join(
+                f"**{r.get('username', str(r['_id']))}** - "
+                f"**WR:**{r['win']}/{r['loss']} {winrate(r['win'], r['loss'])}% - "
+                f"**Equité:**{r['equity']}"
+                for r in records
+            ),
+            inline=False
+        )
+
         page2 = discord.Embed(
             title='Grand gagnant',
-            description=f'**{records[0][0]}** avec une équité de **{records[0][1]}** et un winrate de **{records[0][2]}/{records[0][3]} {winrate(records[0][2],records[0][3])}%**',
+            description=(
+                f"**{records[0].get('username', str(records[0]['_id']))}** avec une équité de "
+                f"**{records[0]['equity']}** et un winrate de "
+                f"**{records[0]['win']}/{records[0]['loss']} "
+                f"{winrate(records[0]['win'], records[0]['loss'])}%**"
+            ),
             colour=discord.Colour.green()
         )
-        page2.set_thumbnail(url=usr.avatar_url)
+        page2.set_thumbnail(url=top_usr.display_avatar.url)
+
+        bot_usr = await client.fetch_user(records[-1]["_id"])
         page3 = discord.Embed(
             title='Grand perdant',
-            description=f'**{records[-1][0]}** avec une équité de **{records[-1][1]}** et un winrate de **{records[-1][2]}/{records[-1][3]} {winrate(records[-1][2],records[-1][3])}%**',
+            description=(
+                f"**{records[-1].get('username', str(records[-1]['_id']))}** avec une équité de "
+                f"**{records[-1]['equity']}** et un winrate de "
+                f"**{records[-1]['win']}/{records[-1]['loss']} "
+                f"{winrate(records[-1]['win'], records[-1]['loss'])}%**"
+            ),
             colour=discord.Colour.red()
         )
-        lsr = await discord.Client.fetch_user(client, records[-1][4])
-        page3.set_thumbnail(url=lsr.avatar_url)
+        page3.set_thumbnail(url=bot_usr.display_avatar.url)
 
         pages = [page1, page2, page3]
-
         msg_pg1 = await channel.send(embed=page1)
 
         await msg_pg1.add_reaction('⏮')
@@ -50,28 +71,28 @@ class incscore(BaseCommand):
         await msg_pg1.add_reaction('⏭')
 
         i = 0
-        def check(reaction,user):
-            return reaction.emoji in ('⏮','◀','▶','⏭') and reaction.message == msg_pg1 and not user.bot
+
+        def check(reaction, user):
+            return reaction.emoji in ('⏮', '◀', '▶', '⏭') and reaction.message == msg_pg1 and not user.bot
+
         while True:
             try:
-                reaction,user = await client.wait_for('reaction_add', timeout=45.0, check=check)
+                reaction, user = await client.wait_for('reaction_add', timeout=45.0, check=check)
                 emoji = str(reaction.emoji)
             except asyncio.TimeoutError:
                 await msg_pg1.clear_reactions()
                 return
-            if str(user) != 'Tetrabot#2779':  # Example: 'MyBot#1111'
+            if str(user) != 'Tetrabot#2779':
                 await msg_pg1.remove_reaction(reaction, user)
             if emoji == '⏮':
                 i = 0
                 await msg_pg1.edit(embed=pages[i])
-            if emoji == '◀':
-                if i > 0:
-                    i -= 1
-                    await msg_pg1.edit(embed=pages[i])
-            if emoji == '▶':
-                if i < 2:
-                    i += 1
-                    await msg_pg1.edit(embed=pages[i])
+            if emoji == '◀' and i > 0:
+                i -= 1
+                await msg_pg1.edit(embed=pages[i])
+            if emoji == '▶' and i < 2:
+                i += 1
+                await msg_pg1.edit(embed=pages[i])
             if emoji == '⏭':
                 i = 2
                 await msg_pg1.edit(embed=pages[i])

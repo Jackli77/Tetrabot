@@ -31,10 +31,10 @@ def get_emoji(emoji_name, fail_silently=False):
 # Uses the channel name by default
 # If many matching channels are found, returns the first one
 def get_channel(client, value, attribute="name"):
-    channel = next((c for c in client.get_all_channels() 
+    channel = next((c for c in client.get_all_channels()
                     if getattr(c, attribute).lower() == value.lower()), None)
     if not channel:
-        raise ValueError("No such channel")
+        print(f"WARNING: channel '{value}' not found — check CHANNEL_* names in settings.py", flush=True)
     return channel
 
 

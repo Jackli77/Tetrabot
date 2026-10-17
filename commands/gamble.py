@@ -40,7 +40,7 @@ class gamble(BaseCommand):
                 "{0}, rentre un nombre strictement positif".format(message.author.mention))
             return
         aut_id = int(''.join(filter(str.isdigit, message.author.mention)))
-        aut_usr = await Client.fetch_user(client, aut_id)
+        aut_usr = await client.fetch_user(aut_id)
         msg0 = "**{}** lance un gamble cappé à **{}**".format(aut_usr.mention, upper)
         bet_msg = await channel.send(msg0)
         await bet_msg.add_reaction('✅')
@@ -81,8 +81,8 @@ class gamble(BaseCommand):
         await message.channel.send(msg3)
         await sleep(2)
         await message.channel.send(msg4)
-        rec1 = incdb(aut_id, rolled2 - rolled1)
-        rec2 = incdb(adv_usr.id, rolled1 - rolled2)
+        rec1 = await incdb(aut_id, rolled2 - rolled1)
+        rec2 = await incdb(adv_usr.id, rolled1 - rolled2)
         await message.channel.send(
             f"**{aut_usr.display_name}** a un score de **{rec1[0][0]}** et une équité de **{rec1[0][1]}**")
         await message.channel.send(

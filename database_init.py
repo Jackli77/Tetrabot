@@ -1,31 +1,24 @@
-import os
-import psycopg2
+import settings
+from motor.motor_asyncio import AsyncIOMotorClient
 
-# Connect to DB
-from discord import Client
+# Create the async Motor client from the URI in .env
+_client = AsyncIOMotorClient(settings.MONGODB_URI)
 
-os.system("set DATABASE_URL=postgres://eccexmdcwmfbfs:ffc3c2b5fdee5036a8ccc050911f405773c568ec757870655c1142e9f3ace6c6"
-          "@ec2-3-248-4-172.eu-west-1.compute.amazonaws.com:5432/d2tvutmq0s0kd0")
-
-DATABASE_URL = os.environ['DATABASE_URL']
-conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+# Database and collection references — import these elsewhere
+db = _client["tetrabot"]
+users = db["users"]
 
 
 async def initialize(client):
-    # Open a cursor to perform database operations
-    cur = conn.cursor()
-    cur.execute("SELECT userid FROM users")
-    records = cur.fetchall()
-    cur.close()
-    cur2 = conn.cursor()
-    for id in records:
-
-        name = await Client.fetch_user(client, id[0])
-        cur2.execute("""
-                    UPDATE users
-                    SET username = %(name)s
-                    WHERE userid = %(id)s;
-                    """,
-                    {'id': id, 'name': name.name})
-    conn.commit()
-    cur2.close()
+    """Sync stored usernames against Discord at startup."""
+    cursor = users.find({}, {"_id": 1})
+    async for doc in cursor:
+        try:
+            user = await client.fetch_user(doc["_id"])
+            await users.update_one(
+                {"_id": doc["_id"]},
+                {"$set": {"username": user.name}}
+            )
+        except Exception as e:
+            print(f"Could not fetch user {doc['_id']}: {e}")
+    print("Database initialised.", flush=True)

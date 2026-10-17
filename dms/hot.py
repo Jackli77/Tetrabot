@@ -1,7 +1,6 @@
 import asyncio
-from discord import Client
+import settings
 from dms.base_dm import BaseDm
-
 from utils import get_channel
 
 
@@ -14,9 +13,9 @@ class hot(BaseDm):
 
     async def handle(self, params, message, client):
         aut_id = int(''.join(filter(str.isdigit, message.author.mention)))
-        aut_usr = await Client.fetch_user(client, aut_id)
+        aut_usr = await client.fetch_user(aut_id)
         channel = message.channel
-        waifu = get_channel(client, "waifu")
+        waifu = get_channel(client, settings.CHANNEL_WAIFU)
         if len(params) > 2:
             try:
                 max = int(params[0])
