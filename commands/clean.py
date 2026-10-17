@@ -1,12 +1,13 @@
 from asyncio import sleep
 from commands.base_command import BaseCommand
 
-class c(BaseCommand):
+class Clean(BaseCommand):
 
     def __init__(self):
-        description = "Supprime @param message"
+        description = "Supprime un nombre donné de messages"
         params = ["nombre"]
-        super().__init__(description, params)
+        aliases = ["c"]
+        super().__init__(description, params, aliases=aliases)
 
     async def handle(self, params: int, message,client):
         max = int(params[0])

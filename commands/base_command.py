@@ -2,9 +2,10 @@ import settings
 
 class BaseCommand:
 
-    def __init__(self, description, params):
+    def __init__(self, description, params, aliases=None):
         self.name = type(self).__name__.lower()
         self.params = params
+        self.aliases = aliases or []
 
         desc = f"**{settings.COMMAND_PREFIX}{self.name}**"
 

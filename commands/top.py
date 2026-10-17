@@ -11,7 +11,7 @@ class top(BaseCommand):
 
     def __init__(self):
         # A quick description for the help message
-        description = "Calcule ton bénéf sur un exo"
+        description = "Demande une réaction 👍 pour tester les réactions"
         # A list of parameters that the command will take as input
         # Parameters will be separated by spaces and fed to the 'params'
         # argument in the handle() method

@@ -9,9 +9,10 @@ from commands.incdb import winrate
 class incscore(BaseCommand):
 
     def __init__(self):
-        description = "Donne le tableau des inc scores"
+        description = "Affiche le classement (leaderboard) des joueurs par équité"
         params = []
-        super().__init__(description, params)
+        aliases = ["leaderboard", "lb", "classement"]
+        super().__init__(description, params, aliases=aliases)
 
     async def handle(self, params, message, client):
         channel = message.channel
@@ -82,7 +83,7 @@ class incscore(BaseCommand):
             except asyncio.TimeoutError:
                 await msg_pg1.clear_reactions()
                 return
-            if str(user) != 'Tetrabot#2779':
+            if user != client.user:
                 await msg_pg1.remove_reaction(reaction, user)
             if emoji == '⏮':
                 i = 0

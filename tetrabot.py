@@ -12,6 +12,10 @@ from events import *
 
 from utils import get_channel
 
+from discord.ext import commands
+from discord import app_commands
+import slash_commands
+
 # Set to remember if the bot is already running, since on_ready may be called
 # more than once on reconnects
 this = sys.modules[__name__]
@@ -30,9 +34,12 @@ def main():
     intents = discord.Intents.default()
     intents.message_content = True
 
-    # Initialize the client
+    # Initialize the commands.Bot client (supports both prefix commands & slash commands)
     print("Starting up...")
-    client = discord.Client(intents=intents)
+    client = commands.Bot(command_prefix=settings.COMMAND_PREFIX, intents=intents)
+
+    # Register Slash Commands into the bot tree
+    slash_commands.setup_slash_commands(client, client.tree)
 
     # Define event handlers for the client
     # on_ready may be called multiple times in the event of a reconnect,
@@ -44,6 +51,20 @@ def main():
 
         this.running = True
         print(f"Logged in as {client.user} (ID: {client.user.id})", flush=True)
+
+        # Synchronize slash commands with Discord
+        try:
+            print("Syncing slash commands with Discord...", flush=True)
+            if settings.GUILD_ID:
+                guild_obj = discord.Object(id=int(settings.GUILD_ID))
+                client.tree.copy_global_to(guild=guild_obj)
+                synced_guild = await client.tree.sync(guild=guild_obj)
+                print(f"Synced {len(synced_guild)} slash commands instantly to Guild ID {settings.GUILD_ID}!", flush=True)
+
+            synced = await client.tree.sync()
+            print(f"Synced {len(synced)} global slash commands successfully!", flush=True)
+        except Exception as e:
+            print(f"Failed to sync slash commands: {e}", flush=True)
 
         botactivity = get_channel(client, settings.CHANNEL_BOT_ACTIVITY)
         if botactivity:

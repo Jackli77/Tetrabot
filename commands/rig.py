@@ -11,7 +11,7 @@ class rig(BaseCommand):
     async def handle(self, params, message, client):
         channel = message.channel
         aut_id = int(''.join(filter(str.isdigit, message.author.mention)))
-        aut_usr = await Client.fetch_user(client, aut_id)
+        aut_usr = await client.fetch_user(aut_id)
         msg0 = "**{}** the games have been successfully rigged".format(aut_usr.display_name)
         bet_msg = await channel.send(msg0)
         await bet_msg.add_reaction('✅')

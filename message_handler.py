@@ -6,9 +6,13 @@ from commands               import *
 
 import settings
 
-# Register all available commands
-COMMAND_HANDLERS = {c.__name__.lower(): c()
-                    for c in BaseCommand.__subclasses__()}
+# Register all available commands (including aliases)
+COMMAND_HANDLERS = {}
+for c in BaseCommand.__subclasses__():
+    instance = c()
+    COMMAND_HANDLERS[instance.name] = instance
+    for alias in getattr(instance, "aliases", []):
+        COMMAND_HANDLERS[alias.lower()] = instance
 
 ###############################################################################
 

@@ -1,8 +1,8 @@
 from dms.base_dm import BaseDm
 
-# This, in addition to tweaking __all__ on commands/__init__.py, 
-# imports all classes inside the commands package.
-from commands               import *
+# This, in addition to tweaking __all__ on dms/__init__.py, 
+# imports all classes inside the dms package.
+from dms                    import *
 
 import settings
 

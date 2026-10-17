@@ -14,6 +14,9 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 # MongoDB connection URI. Loaded from .env
 MONGODB_URI = os.getenv("MONGODB_URI")
 
+# Optional Guild ID for instant slash command registration (instead of up to 1h Discord cache delay)
+GUILD_ID = os.getenv("GUILD_ID")
+
 # The now playing game. Set this to anything false-y ("", None) to disable it
 NOW_PLAYING = COMMAND_PREFIX + "commands"
 
