@@ -4,6 +4,10 @@ from commands.base_command import BaseCommand
 from asyncio import sleep
 from numpy.random import randint
 
+
+# The !crit command: starts a "critical hit" duel between the author and the first
+# user who reacts with ✅. Each round both players roll; the first to crit wins.
+# Command name: !crit
 from commands.incdb import incdb
 
 
@@ -16,11 +20,13 @@ class crit(BaseCommand):
 
     async def handle(self, params, message, client):
         channel = message.channel
-        manche = 0
-        crit1 = 0
-        crit2 = 0
-        odds = 15
-        slep = 1
+        manche = 0          # Round counter
+        crit1 = 0           # Crit count for the author
+        crit2 = 0           # Crit count for the opponent
+        odds = 15           # Base crit chance percentage (1-90)
+        slep = 1            # Delay in seconds between messages
+
+        # Resolve the author's Discord user ID from their mention string.
         aut_id = int(''.join(filter(str.isdigit, message.author.mention)))
         aut_usr = await client.fetch_user(aut_id)
         if len(params) > 1:

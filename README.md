@@ -1,77 +1,82 @@
 # Tetrabot
 
-A modular Python bot built to handle commands, scheduled cron events, direct messages, and custom message handlers.
+Un bot Discord modulaire en Python intégrant des **Slash Commands Discord (`/`)**, un préfixe texte classique (`!`), et une base de données **MongoDB Atlas** asynchrone.
 
-## Features
+---
 
-* **Command Handling:** Built-in command module featuring base classes and individual command extensions (`aup`, `clean`, `gamble`, `top`, `random`, `rig`, etc.).
-* **Cron Events:** Automated periodic task execution managed under `cronevents/`.
-* **Direct Message Support:** DM handlers to process incoming private messages and specific DM commands.
-* **Database Initialization:** Setup script (`database_init.py`) included to initialize local storage.
-* **Deployment Ready:** Includes `Procfile` for Heroku or similar PaaS deployment.
+## 🚀 Fonctionnalités
 
-## Getting Started
+- **Slash Commands & UI Modernes :** Support natif des commandes slash (`/`) avec autocomplétion, descriptions, et composants interactifs (boutons `discord.ui.Button` pour la pagination et l'acceptation de défis).
+- **Base de données MongoDB :** Driver asynchrone Motor pour le stockage des statistiques de jeu, de l'historique et des classements.
+- **Jeux d'argent & Duels :**
+  - `/gamble <limite>` : Défi de roulette cappée contre un autre joueur.
+  - `/crit <somme> [odds]` : Duel de coups critiques (chafer) avec relance automatique en cas d'égalité.
+  - `/incscore` (ou `/leaderboard`) : Tableau des scores et classement par équité avec pagination par boutons.
+  - `/exo [prix]` : Simulateur de forgemagie exo et calcul de rentabilité en kamas.
+  - `/random [min] [max]` : Tirage de nombres aléatoires.
+- **Utilitaires serveur :**
+  - `/clean <nombre>` : Purge rapide et silencieuse de messages avec confirmation éphémère.
+  - `/commands` : Menu d'aide interactif complet sous forme d'Embed.
+  - Surveillance vocale et log des messages supprimés.
 
-### Prerequisites
+---
 
-* Python 3.x
-* Dependencies listed in `requirements.txt`
+## 🛠️ Installation & Démarrage
 
-### Installation
+### Prérequis
+- Python 3.10+ (compatible Python 3.14)
+- Un bot Discord créé sur le [Discord Developer Portal](https://discord.com/developers/applications/) avec les intents `Message Content` et les permissions Slash Commands (`applications.commands` et `bot`).
+- Un cluster MongoDB (ex: MongoDB Atlas gratuit).
 
-1. **Clone the repository:**
+### 1. Configuration
+Copiez le modèle d'environnement :
 ```bash
-git clone https://github.com/your-username/Tetrabot.git
-cd Tetrabot
-
+cp .env.example .env
+```
+Puis éditez `.env` avec vos identifiants :
+```env
+BOT_TOKEN="votre-token-discord"
+MONGODB_URI="mongodb+srv://user:pass@cluster.mongodb.net"
+GUILD_ID="votre-id-de-serveur"  # Optionnel : pour synchronisation instantanée des slash commands
 ```
 
-
-2. **Install dependencies:**
+### 2. Dépendances
+Créez l'environnement virtuel et installez les dépendances :
 ```bash
-pip install -r requirements.txt
-
+python -m venv .venv
+.venv\Scripts\pip install -r requirements.txt
 ```
 
-
-3. **Initialize the database:**
+### 3. Lancer le Bot
+Sur Windows, double-cliquez simplement sur **`run.bat`** ou exécutez :
 ```bash
-python database_init.py
-
+.venv\Scripts\python tetrabot.py
 ```
 
+---
 
-
-### Configuration
-
-Edit `settings.py` to add your bot credentials, database URIs, API key, and configuration options.
-
-### Running the Bot
-
-Start the main application entry point:
-
-```bash
-python tetrabot.py
-
-```
-
-## Project Structure
+## 📂 Structure du Projet
 
 ```text
 Tetrabot/
-├── commands/         # Command implementations and handlers
-├── cronevents/       # Cron event routines and base models
-├── dms/              # DM routing and commands
-├── events/           # Event handlers
-├── database_init.py  # Database initialization script
-├── message_handler.py# Core message routing logic
-├── settings.py       # Configuration and environment settings
-├── tetrabot.py       # Main bot execution file
-├── requirements.txt  # Project dependencies
-└── Procfile          # Deployment configuration
-
+├── commands/           # Modules de commandes préfixe (!gamble, !crit, !clean, etc.)
+│   ├── base_command.py # Classe abstraite de base avec support d'alias
+│   └── ...
+├── dms/                # Commandes spécifiques aux messages privés
+│   ├── base_dm.py
+│   └── hot.py
+├── database_init.py    # Connexion MongoDB Atlas (Motor) et initialisation
+├── slash_commands.py   # Commandes Slash natives (/) avec Views et Boutons Discord
+├── tetrabot.py         # Point d'entrée principal du bot et gestion des événements
+├── settings.py         # Configuration centralisée et variables d'environnement
+├── utils.py            # Fonctions utilitaires (recherche de salons, etc.)
+├── run.bat             # Lanceur Windows en un clic
+├── requirements.txt    # Dépendances Python modernes
+└── .env.example        # Modèle de configuration sécurisé
 ```
 
-## License
+---
 
-This project is licensed under the terms of the [LICENSE](https://www.google.com/search?q=LICENSE) file included in the repository.
+## 📜 Licence
+
+Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.

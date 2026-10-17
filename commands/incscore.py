@@ -6,6 +6,9 @@ from database_init import users
 from commands.incdb import winrate
 
 
+# The !incscore command: shows a paginated leaderboard of all players sorted by equity.
+# Aliases: !leaderboard, !lb, !classement
+# Command name: !incscore
 class incscore(BaseCommand):
 
     def __init__(self):
@@ -17,13 +20,14 @@ class incscore(BaseCommand):
     async def handle(self, params, message, client):
         channel = message.channel
 
-        # Fetch all users sorted by equity descending
+        # Fetch all users from MongoDB, sorted by equity descending (richest first).
         records = await users.find().sort("equity", -1).to_list(length=None)
 
         if not records:
             await channel.send("Aucun joueur enregistré.")
             return
 
+        # --- Page 1: Full leaderboard ---------------------------------------
         page1 = discord.Embed(title="Classement d'equité", colour=discord.Colour.lighter_grey())
         top_usr = await client.fetch_user(records[0]["_id"])
         page1.set_thumbnail(url=top_usr.display_avatar.url)
@@ -38,6 +42,7 @@ class incscore(BaseCommand):
             inline=False
         )
 
+        # --- Page 2: Top player ---------------------------------------------
         page2 = discord.Embed(
             title='Grand gagnant',
             description=(
@@ -50,6 +55,7 @@ class incscore(BaseCommand):
         )
         page2.set_thumbnail(url=top_usr.display_avatar.url)
 
+        # --- Page 3: Bottom player ------------------------------------------
         bot_usr = await client.fetch_user(records[-1]["_id"])
         page3 = discord.Embed(
             title='Grand perdant',
@@ -66,16 +72,19 @@ class incscore(BaseCommand):
         pages = [page1, page2, page3]
         msg_pg1 = await channel.send(embed=page1)
 
-        await msg_pg1.add_reaction('⏮')
-        await msg_pg1.add_reaction('◀')
-        await msg_pg1.add_reaction('▶')
-        await msg_pg1.add_reaction('⏭')
+        # Add navigation reactions for pagination.
+        await msg_pg1.add_reaction('⏮')  # First page
+        await msg_pg1.add_reaction('◀')  # Previous page
+        await msg_pg1.add_reaction('▶')  # Next page
+        await msg_pg1.add_reaction('⏭')  # Last page
 
-        i = 0
+        i = 0  # Current page index
 
+        # Only accept navigation reactions on this message from non-bot users.
         def check(reaction, user):
             return reaction.emoji in ('⏮', '◀', '▶', '⏭') and reaction.message == msg_pg1 and not user.bot
 
+        # Wait for reactions to navigate pages; timeout after 45 seconds.
         while True:
             try:
                 reaction, user = await client.wait_for('reaction_add', timeout=45.0, check=check)
@@ -83,6 +92,7 @@ class incscore(BaseCommand):
             except asyncio.TimeoutError:
                 await msg_pg1.clear_reactions()
                 return
+            # Clean up the user's reaction after processing.
             if user != client.user:
                 await msg_pg1.remove_reaction(reaction, user)
             if emoji == '⏮':

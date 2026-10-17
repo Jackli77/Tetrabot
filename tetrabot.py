@@ -1,28 +1,13 @@
 import sys
-import settings
 import discord
+from discord.ext import commands
+
+import settings
+import database_init
 import message_handler
 import dms_handler
-import database_init
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from events.base_event import BaseEvent
-from cronevents.base_cronevent import BaseCronEvent
-from cronevents import *
-from events import *
-
-from utils import get_channel
-
-from discord.ext import commands
-from discord import app_commands
 import slash_commands
-
-# Set to remember if the bot is already running, since on_ready may be called
-# more than once on reconnects
-this = sys.modules[__name__]
-this.running = False
-
-# Scheduler that will be used to manage events
-sched = AsyncIOScheduler()
+from utils import get_channel
 
 
 ###############################################################################
@@ -41,15 +26,17 @@ def main():
     # Register Slash Commands into the bot tree
     slash_commands.setup_slash_commands(client, client.tree)
 
+    # Track if on_ready has already executed to prevent double execution on reconnects
+    has_started = False
+
     # Define event handlers for the client
-    # on_ready may be called multiple times in the event of a reconnect,
-    # hence the running flag
     @client.event
     async def on_ready():
-        if this.running:
+        nonlocal has_started
+        if has_started:
             return
 
-        this.running = True
+        has_started = True
         print(f"Logged in as {client.user} (ID: {client.user.id})", flush=True)
 
         # Synchronize slash commands with Discord
@@ -78,27 +65,7 @@ def main():
             print("Setting NP game", flush=True)
             await client.change_presence(
                 activity=discord.Game(name=settings.NOW_PLAYING))
-
-        # Load all interval events
-        print("Loading events...", flush=True)
-        n_ev = 0
-        for ev in BaseEvent.__subclasses__():
-            event = ev()
-            sched.add_job(event.run, 'interval', (client,),
-                          minutes=event.interval_minutes)
-            n_ev += 1
-
-        for crev in BaseCronEvent.__subclasses__():
-            cronevent = crev()
-            sched.add_job(cronevent.run, 'cron', (client,),
-                          year=cronevent.year, month=cronevent.month, day=cronevent.day,
-                          week=cronevent.week, day_of_week=cronevent.day_of_week,
-                          hour=cronevent.hour, minute=cronevent.minute,
-                          second=cronevent.second)
-            n_ev += 1
-
-        sched.start()
-        print(f"{n_ev} events loaded", flush=True)
+        print("Bot is ready and listening!", flush=True)
 
     # The message handler for both new messages and edits
     async def common_handle_message(message):
@@ -150,22 +117,6 @@ def main():
                 await voice.send(f"**{member}** s'est déconnecté de **{before.channel}**")
             elif str(after.channel) != str(before.channel):
                 await voice.send(f"**{member}** à rejoint le salon **{after.channel}**")
-
-    async def createMutedRole(message):
-        mutedRole = await message.guild.create_role(
-            name="Muted",
-            permissions=discord.Permissions(send_messages=False, speak=False),
-            reason="Creation du role Muted pour mute des gens.")
-        for channel in message.guild.channels:
-            await channel.set_permissions(mutedRole, send_messages=False, speak=False)
-        return mutedRole
-
-    async def getMutedRole(message):
-        roles = message.guild.roles
-        for role in roles:
-            if role.name == "Muted":
-                return role
-        return await createMutedRole(message)
 
     # Start the bot
     client.run(settings.BOT_TOKEN)

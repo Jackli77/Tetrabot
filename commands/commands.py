@@ -3,8 +3,8 @@ import settings
 from commands.base_command import BaseCommand
 
 
-# This is a convenient command that automatically generates a helpful
-# message showing all available commands
+# The /commands help command: lists every available server and DM command
+# in a formatted Discord embed.
 class Commands(BaseCommand):
 
     def __init__(self):
@@ -13,6 +13,7 @@ class Commands(BaseCommand):
         super().__init__(description, params)
 
     async def handle(self, params, message, client):
+        # Import handler registries (imported locally to avoid circular imports).
         from message_handler import COMMAND_HANDLERS
         from dms_handler import DMS_HANDLERS
 
@@ -22,7 +23,8 @@ class Commands(BaseCommand):
             colour=discord.Colour.blue()
         )
 
-        # 1. Server Commands (unique instances to avoid duplicate alias entries)
+        # --- Server commands -------------------------------------------------
+        # Deduplicate by command instance so aliases don't create duplicate rows.
         seen_cmds = set()
         server_lines = []
         for name, cmd in sorted(COMMAND_HANDLERS.items()):
@@ -30,12 +32,14 @@ class Commands(BaseCommand):
                 continue
             seen_cmds.add(cmd)
 
+            # Build the usage signature, e.g. `!gamble <limite>`
             param_str = " " + " ".join(f"<{p}>" for p in cmd.params) if cmd.params else ""
             cmd_signature = f"`{settings.COMMAND_PREFIX}{cmd.name}{param_str}`"
             if getattr(cmd, "aliases", None):
                 alias_str = ", ".join(f"`{settings.COMMAND_PREFIX}{a}`" for a in cmd.aliases)
                 cmd_signature += f" *(alias: {alias_str})*"
 
+            # Strip the leading "`!name`:" prefix from the stored description.
             desc = cmd.description
             if ": " in desc:
                 desc = desc.split(": ", 1)[1]
@@ -50,7 +54,7 @@ class Commands(BaseCommand):
                 inline=False
             )
 
-        # 2. DM Commands
+        # --- DM commands -----------------------------------------------------
         seen_dms = set()
         dm_lines = []
         for name, cmd in sorted(DMS_HANDLERS.items()):
