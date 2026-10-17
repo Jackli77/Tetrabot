@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 
 import settings
-import database_init
+from models import db as models_db
 import message_handler
 import dms_handler
 import slash_commands
@@ -58,7 +58,7 @@ def main():
             await botactivity.send("Le bot est pret!")
 
         print("Verifying database integrity...", flush=True)
-        await database_init.initialize(client)
+        await models_db.initialize(client)
 
         # Set the playing status
         if settings.NOW_PLAYING:

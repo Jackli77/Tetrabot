@@ -1,16 +1,13 @@
 import asyncio
-from discord import Client
+
 from commands.base_command import BaseCommand
-from asyncio import sleep
-from numpy.random import randint
 
 
-# The !crit command: starts a "critical hit" duel between the author and the first
-# user who reacts with ✅. Each round both players roll; the first to crit wins.
+# The !crit command: starts a "critical hit" duel between the author and the
+# first user who reacts with ✅.
+# Only the prefix-specific parts live here (argument parsing + the ✅ reaction
+# challenge); the shared duel logic lives in controllers.commands.cmd_crit.
 # Command name: !crit
-from commands.incdb import incdb
-
-
 class crit(BaseCommand):
 
     def __init__(self):
@@ -19,12 +16,10 @@ class crit(BaseCommand):
         super().__init__(description, params)
 
     async def handle(self, params, message, client):
+        from controllers import LOGIC
+
         channel = message.channel
-        manche = 0          # Round counter
-        crit1 = 0           # Crit count for the author
-        crit2 = 0           # Crit count for the opponent
-        odds = 15           # Base crit chance percentage (1-90)
-        slep = 1            # Delay in seconds between messages
+        odds = 15           # Base crit chance percentage (10-90)
 
         # Resolve the author's Discord user ID from their mention string.
         aut_id = int(''.join(filter(str.isdigit, message.author.mention)))
@@ -52,69 +47,24 @@ class crit(BaseCommand):
                 return
         else:
             return
+
+        # Announce the crit duel and add a ✅ reaction for opponents to accept.
         msg0 = "**{}** mise **{}** dans un duel de chafer crit **{}%**".format(aut_usr.mention, argent, odds)
         bet_msg = await channel.send(msg0)
         await bet_msg.add_reaction('✅')
 
+        # Only accept a ✅ on the bet message from a non-bot user.
         def check(reaction, user):
             return str(reaction.emoji) == '✅' and reaction.message == bet_msg and not user.bot
 
         try:
             reaction, user = await client.wait_for('reaction_add', timeout=45.0, check=check)
-            adv_usr = user
         except asyncio.TimeoutError:
             await channel.send('Timeout')
             return
         else:
-            await channel.send(f'**{adv_usr.mention}** a accepté le challenge de {aut_usr.mention}')
-        msg1 = "**{} Coup critique!**<:bangbang:791122260046905355>".format(aut_usr.display_name)
-        msg2 = "**{} Coup critique!**<:bangbang:791122260046905355>".format(adv_usr.display_name)
-        msg3 = "Pas de chance, **{}** <:8219_cheems:720974989490389043>".format(aut_usr.display_name)
-        msg4 = "Pas de chance, **{}** <:8219_cheems:720974989490389043>".format(adv_usr.display_name)
-        while crit1 == crit2:
-            await sleep(slep)
-            manche += 1
-            await channel.send("__**Manche {}**__".format(manche))
+            await channel.send(f'**{user.mention}** a accepté le challenge de {aut_usr.mention}')
 
-            await sleep(slep)
-            crited1 = randint(0, 100) < odds
-            if crited1:
-                crit1 += 1
-                await channel.send(msg1)
-            else:
-                await channel.send(msg3)
-
-            await sleep(slep)
-            crited2 = randint(0, 100) < odds
-            if crited2:
-                crit2 += 1
-                await channel.send(msg2)
-                if crited1:
-                    argent *= 2
-                    await channel.send(
-                        "La somme en jeu passe à **{}** <:money_with_wings:791121758774231050>".format(argent))
-            else:
-                await channel.send(msg4)
-
-        await sleep(slep)
-        msg5 = "Le duel s'est terminé après **{}** manches et **{}** égalités".format(manche, min(crit1, crit2))
-        msg6 = "Le gagnant est **{0}**, **{1}** doit donner **{2}** à **{0}** <:money_with_wings:791121758774231050>".format(
-            aut_usr.display_name, adv_usr.display_name, argent)
-        msg7 = "Le gagnant est **{0}**, **{1}** doit donner **{2}** à **{0}** <:money_with_wings:791121758774231050>".format(
-            adv_usr.display_name, aut_usr.display_name, argent)
-        if crit1 > crit2:
-            await channel.send(msg5 + "\n" + msg6)
-            rec1 = await incdb(aut_id, argent)
-            rec2 = await incdb(adv_usr.id, -argent)
-            await message.channel.send(
-                f"**{aut_usr.display_name}** a un score de **{rec1[0][0]}** et une équité de **{rec1[0][1]}**")
-            await message.channel.send(
-                f"**{adv_usr.display_name}** a un score de **{rec2[0][0]}** et une équité de **{rec2[0][1]}**")
-        else:
-            await channel.send(msg5 + "\n" + msg7)
-            rec1 = await incdb(aut_id, -argent)
-            rec2 = await incdb(adv_usr.id, argent)
-            await message.channel.send(
-                f"**{aut_usr.display_name}** a un score de **{rec1[0][0]}** et une équité de **{rec1[0][1]}**")
-            await message.channel.send(
-                f"**{adv_usr.display_name}** a un score de **{rec2[0][0]}** et une équité de **{rec2[0][1]}**")
+        # Hand over to the shared duel logic against the acceptor.
+        ctx = self.build_context(params, message, client)
+        await LOGIC["cmd_crit"](ctx, user, argent, odds)

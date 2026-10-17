@@ -58,21 +58,44 @@ Sur Windows, double-cliquez simplement sur **`run.bat`** ou exécutez :
 
 ```text
 Tetrabot/
-├── commands/           # Modules de commandes préfixe (!gamble, !crit, !clean, etc.)
-│   ├── base_command.py # Classe abstraite de base avec support d'alias
+├── controllers/         # COUCHE CONTRÔLEUR — logique métier des commandes
+│   ├── context.py       #   CommandContext + fabriques de "respond" (! et /)
+│   ├── commands.py      #   Les fonctions cmd_* (source unique pour ! et /)
+│   └── registry.py      #   Registre LOGIC (auto-collecte des cmd_*)
+├── models/              # COUCHE MODÈLE — accès données et règles pures
+│   ├── db.py            #   Connexion MongoDB Atlas (Motor) et collections
+│   ├── stats.py         #   Stats, winrate, leaderboard, enregistrement
+│   └── duels.py         #   Règles de duel gamble/crit (pures, testables)
+├── views/               # COUCHE VUE — rendu pur, jamais d'accès BDD
+│   ├── formatting.py    #   Renderers (messages et embeds)
+│   ├── leaderboard.py   #   View de pagination du classement
+│   └── challenge.py     #   Views de défi (boutons Gamble/Crit)
+├── commands/            # Adapteurs préfixe (!gamble, !crit, !clean, etc.)
+│   ├── base_command.py  #   Classe de base + dispatch générique vers LOGIC
 │   └── ...
-├── dms/                # Commandes spécifiques aux messages privés
+├── dms/                 # Commandes spécifiques aux messages privés
 │   ├── base_dm.py
 │   └── hot.py
-├── database_init.py    # Connexion MongoDB Atlas (Motor) et initialisation
-├── slash_commands.py   # Commandes Slash natives (/) avec Views et Boutons Discord
-├── tetrabot.py         # Point d'entrée principal du bot et gestion des événements
-├── settings.py         # Configuration centralisée et variables d'environnement
-├── utils.py            # Fonctions utilitaires (recherche de salons, etc.)
-├── run.bat             # Lanceur Windows en un clic
-├── requirements.txt    # Dépendances Python modernes
-└── .env.example        # Modèle de configuration sécurisé
+├── tests/               # Tests par couche (modèles, renderers, transports)
+│   └── run_all.py       #   python tests\run_all.py
+├── slash_commands.py    # Adapteurs Slash natives (/), thin wrappers
+├── message_handler.py   # Routage des messages préfixe vers les commandes
+├── dms_handler.py       # Routage des messages privés
+├── tetrabot.py          # Point d'entrée principal du bot
+├── settings.py          # Configuration centralisée et variables d'environnement
+├── utils.py             # Fonctions utilitaires (recherche de salons, etc.)
+├── run.bat              # Lanceur Windows en un clic
+├── requirements.txt     # Dépendances Python modernes
+└── .env.example         # Modèle de configuration sécurisé
 ```
+
+> **Architecture MVC (Model-View-Presenter)** : chaque commande n'est
+> implémentée **qu'une seule fois** dans `controllers/commands.py` et sert
+> aussi bien au préfixe `!` qu'aux slash-commands `/`. Les modèles ne
+> dépendent jamais de Discord, les vues n'accèdent jamais à la base de
+> données, et les contrôleurs orchestrent les deux puis rendent via
+> `ctx.respond(...)`.
+
 
 ---
 
