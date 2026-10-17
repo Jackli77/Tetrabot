@@ -389,34 +389,6 @@ def setup_slash_commands(bot: discord.Client, tree: app_commands.CommandTree):
         )
         await interaction.response.send_message(embed=embed)
 
-    # 7. /exo — Simulates an exo attempt sequence and reports profit or loss.
-    @tree.command(name="exo", description="Simule le bénéfice ou la perte sur une tentative d'exo")
-    @app_commands.describe(prix="Prix d'une tentative en kamas (défaut: 30000)")
-    async def cmd_exo(interaction: discord.Interaction, prix: int = 30000):
-        c = 1                      # Attempt counter
-        rep = random.randint(1, 100)  # Target roll needed to succeed
-        r = random.randint(1, 100)    # Current roll
-
-        # Keep rolling until we hit the target number.
-        while r != rep:
-            c += 1
-            r = random.randint(1, 100)
-
-        # Success within 100 attempts = profit; otherwise = loss.
-        if c <= 100:
-            benef = prix * (100 - c)
-            formatted = f"{benef:,}".replace(",", " ")
-            desc = f"**{c}** tentative(s) avant l'exo !\n💰 Bénéfice : **{formatted} kamas**"
-            colour = discord.Colour.green()
-        else:
-            perte = prix * (c - 100)
-            formatted = f"{perte:,}".replace(",", " ")
-            desc = f"**{c}** tentatives avant l'exo...\n📉 Perte : **{formatted} kamas**"
-            colour = discord.Colour.red()
-
-        embed = discord.Embed(title="⚒️ Simulation Exo", description=desc, colour=colour)
-        await interaction.response.send_message(embed=embed)
-
     # 8. /clean — Deletes a given number of recent messages in the channel.
     @tree.command(name="clean", description="Supprime un nombre donné de messages dans ce salon")
     @app_commands.describe(nombre="Nombre de messages à supprimer (1 à 100)")
@@ -451,13 +423,3 @@ def setup_slash_commands(bot: discord.Client, tree: app_commands.CommandTree):
         embed.add_field(name="Équité nette", value=str(records[0][1]), inline=True)
         embed.add_field(name="Winrate", value=f"{records[0][2]}W / {records[0][3]}L ({wr}%)", inline=True)
         await interaction.response.send_message(embed=embed)
-
-    # 11. /fh — A simple joke command.
-    @tree.command(name="fh", description="Fuck qui ?")
-    async def cmd_fh(interaction: discord.Interaction):
-        await interaction.response.send_message("Fuck qui ?\nFuck hugo !")
-
-    # 12. /rig — A joke command claiming to rig the money games.
-    @tree.command(name="rig", description="Truque les jeux d'argent")
-    async def cmd_rig(interaction: discord.Interaction):
-        await interaction.response.send_message(f"✅ **{interaction.user.display_name}**, the games have been successfully rigged.")

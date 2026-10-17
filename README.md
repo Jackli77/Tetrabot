@@ -12,7 +12,6 @@ Un bot Discord modulaire en Python intégrant des **Slash Commands Discord (`/`)
   - `/gamble <limite>` : Défi de roulette cappée contre un autre joueur.
   - `/crit <somme> [odds]` : Duel de coups critiques (chafer) avec relance automatique en cas d'égalité.
   - `/incscore` (ou `/leaderboard`) : Tableau des scores et classement par équité avec pagination par boutons.
-  - `/exo [prix]` : Simulateur de forgemagie exo et calcul de rentabilité en kamas.
   - `/random [min] [max]` : Tirage de nombres aléatoires.
 - **Utilitaires serveur :**
   - `/clean <nombre>` : Purge rapide et silencieuse de messages avec confirmation éphémère.
