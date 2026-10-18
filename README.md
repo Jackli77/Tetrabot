@@ -37,7 +37,6 @@ Puis éditez `.env` avec vos identifiants :
 ```env
 BOT_TOKEN="votre-token-discord"
 MONGODB_URI="mongodb+srv://user:pass@cluster.mongodb.net"
-GUILD_ID="votre-id-de-serveur"  # Optionnel : pour synchronisation instantanée des slash commands
 ```
 
 ### 2. Dépendances

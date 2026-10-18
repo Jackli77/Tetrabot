@@ -18,7 +18,6 @@ from config.settings import (
     CHANNEL_VOICE,
     CHANNEL_WAIFU,
     COMMAND_PREFIX,
-    GUILD_ID,
     MONGODB_URI,
     NOW_PLAYING,
 )
@@ -32,7 +31,6 @@ __all__ = [
     "CHANNEL_VOICE",
     "CHANNEL_WAIFU",
     "COMMAND_PREFIX",
-    "GUILD_ID",
     "MONGODB_URI",
     "NOW_PLAYING",
     "get_channel",

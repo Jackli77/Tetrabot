@@ -69,15 +69,10 @@ def create_bot() -> commands.Bot:
         has_started = True
         print(f"Logged in as {bot_client.user} (ID: {bot_client.user.id})", flush=True)
 
-        # Synchronize slash commands with Discord
+        # Synchronize global slash commands with Discord
+        # (note: global commands can take up to 1h to propagate on Discord's side)
         try:
             print("Syncing slash commands with Discord...", flush=True)
-            if settings.GUILD_ID:
-                guild_obj = discord.Object(id=int(settings.GUILD_ID))
-                bot_client.tree.copy_global_to(guild=guild_obj)
-                synced_guild = await bot_client.tree.sync(guild=guild_obj)
-                print(f"Synced {len(synced_guild)} slash commands instantly to Guild ID {settings.GUILD_ID}!", flush=True)
-
             synced = await bot_client.tree.sync()
             print(f"Synced {len(synced)} global slash commands successfully!", flush=True)
         except Exception as e:
