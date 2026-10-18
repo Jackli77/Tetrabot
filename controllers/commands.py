@@ -4,15 +4,16 @@ Each ``cmd_*`` function follows the same shape:
 
     parse ctx.args  ->  call models  ->  render with views  ->  await ctx.respond(...)
 
-Prefix (``!``) and slash (``/``) transports both build a
-:class:`CommandContext` and dispatch through ``controllers.LOGIC``, so the
-exact same code runs for both.  Nothing in here imports a transport module or
-touches ``message``/``interaction`` directly.
+Both detectors (:mod:`detectors.prefix` for ``!`` and :mod:`detectors.slash`
+for ``/``) build a :class:`CommandContext` and dispatch through
+``controllers.LOGIC``, so the exact same code runs for both.  Nothing in
+here imports a detector module or touches ``message``/``interaction``
+directly.
 
 To add a new command:
     1. Write ``async def cmd_foo(ctx)`` here (auto-registered in ``LOGIC``).
-    2. Add a metadata-only prefix class in ``controllers/prefix/foo.py``.
-    3. Add a thin slash wrapper in ``controllers/slash.py``.
+    2. Add a ``!`` adapter class in ``detectors/prefix/foo.py``.
+    3. Add a thin ``/`` wrapper in ``detectors/slash/detector.py``.
 """
 from __future__ import annotations
 
@@ -219,9 +220,9 @@ async def cmd_crit(ctx: CommandContext, opponent: discord.User, argent: int, odd
 
 async def cmd_help(ctx: CommandContext):
     """List available commands (shared by /commands and !commands)."""
-    # Imported lazily: the prefix/dm routers import command classes, whose
-    # handlers dispatch back into this module (no import cycle at load time).
-    from controllers.dm.router import DMS_HANDLERS
-    from controllers.prefix.router import COMMAND_HANDLERS
+    # Imported lazily: the detectors import command adapters, whose help
+    # command imports the routers (no import cycle at load time).
+    from detectors.prefix.dm.router import DMS_HANDLERS
+    from detectors.prefix.router import COMMAND_HANDLERS
 
     await ctx.respond(embed=fmt.render_help(ctx.prefix, COMMAND_HANDLERS, DMS_HANDLERS))

@@ -1,8 +1,8 @@
 """CONTROLLER plumbing: the transport-agnostic command context.
 
-Prefix commands (``!``) and slash commands (``/``) both build a
-:class:`CommandContext` and hand it to the matching ``cmd_*`` function, so
-one implementation serves both transports.
+Both detectors (:mod:`detectors.prefix` for ``!``, :mod:`detectors.slash`
+for ``/``) build a :class:`CommandContext` and hand it to the matching
+``cmd_*`` function, so one implementation serves both invocation styles.
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ class CommandContext:
 
 
 def make_prefix_respond(message: discord.Message) -> Callable[..., Awaitable]:
-    """Build a ``respond`` callable for prefix commands (``!``)."""
+    """Build a ``respond`` callable for the ``!`` detector."""
 
     async def respond(
         content: Optional[str] = None,
@@ -46,7 +46,7 @@ def make_prefix_respond(message: discord.Message) -> Callable[..., Awaitable]:
 
 
 def make_slash_respond(interaction: discord.Interaction):
-    """Build a ``respond`` callable for slash commands (``/``).
+    """Build a ``respond`` callable for the ``/`` detector.
 
     The first call uses ``interaction.response.send_message`` (or ``defer`` if
     :meth:`respond.defer` was called first); every subsequent call uses

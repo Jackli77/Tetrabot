@@ -1,15 +1,19 @@
+"""DETECTOR/``/``: recognise native slash invocations on the command tree.
+
+:class:`SlashDetector` registers all Discord slash (app) commands on the
+bot's command tree.  Every command is a thin detector: it builds a shared
+:class:`controllers.CommandContext` (see :mod:`controllers.context`) and
+dispatches to the SAME ``controllers.LOGIC`` functions the ``!`` detector
+uses.  Interactive UI widgets (challenge buttons, leaderboard pagination)
+live in the :mod:`views` package.
+"""
 import discord
 from discord import app_commands
 
 from controllers import LOGIC, CommandContext, make_slash_respond
+from detectors.base import BaseDetector, DetectionResult
 from views.challenge import CritChallengeView, GambleChallengeView
 from views.leaderboard import LeaderboardPaginationView
-
-# This module registers all Discord slash (app) commands on the bot's command tree.
-# Every command is a thin transport adapter: it builds a transport-agnostic
-# CommandContext (see controllers/context.py) and dispatches to the shared
-# cmd_* logic.  Interactive UI widgets (challenge buttons, leaderboard
-# pagination) live in the views/ package.
 
 
 def build_context(interaction: discord.Interaction, args=None) -> CommandContext:
@@ -24,10 +28,36 @@ def build_context(interaction: discord.Interaction, args=None) -> CommandContext
     )
 
 
+class SlashDetector(BaseDetector):
+    """Detect ``/`` invocations by registering the slash tree.
+
+    Detection for slash commands happens inside Discord itself (the user
+    picks a registered command); this class only wires the tree so every
+    invocation normalises into a :class:`CommandContext` and reaches the
+    shared logic.  :meth:`detect` therefore always reports ``handled=True``
+    with no command/args (dispatch already happened in the tree callback).
+    """
+
+    name = "/"
+
+    def __init__(self, bot: discord.Client | None = None):
+        self.bot = bot
+
+    async def detect(self, interaction: discord.Interaction, bot_client=None) -> DetectionResult:
+        """Slash invocations always dispatch via the tree — nothing to parse."""
+        return DetectionResult(handled=True, extra={"slash": True})
+
+    def setup(self, bot: discord.Client, tree: app_commands.CommandTree):
+        """Register every slash command on ``tree`` (thin LOGIC wrappers)."""
+        self.bot = bot
+        setup_slash_commands(bot, tree)
+        return tree
+
+
 def setup_slash_commands(bot: discord.Client, tree: app_commands.CommandTree):
     """Register integrated Discord native slash commands into the bot tree.
 
-    Each command below is a thin transport adapter: it builds the shared
+    Each command below is a thin detector: it builds the shared
     CommandContext and dispatches to ``controllers.LOGIC`` so that the slash
     and prefix variants run the exact same code.
     """

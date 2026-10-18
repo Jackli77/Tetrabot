@@ -1,34 +1,31 @@
-from controllers.prefix.base_command import BaseCommand
+from detectors.prefix.dm.base_dm import BaseDm
 
 # This, in addition to the discovery below,
-# imports all classes inside the controllers.prefix package.
-from controllers.prefix import aup, clean, commands, crit, gamble, inc, incscore, random
+# imports all classes inside the detectors.prefix.dm package.
+from detectors.prefix.dm import commands as dm_commands_module
+from detectors.prefix.dm import hot as dm_hot_module
 
 from config import settings
 
-# Register all available commands (including aliases)
-COMMAND_HANDLERS = {}
-for c in BaseCommand.__subclasses__():
-    instance = c()
-    COMMAND_HANDLERS[instance.name] = instance
-    for alias in getattr(instance, "aliases", []):
-        COMMAND_HANDLERS[alias.lower()] = instance
+# Register all available commands
+DMS_HANDLERS = {c.__name__.lower(): c()
+                    for c in BaseDm.__subclasses__()}
 
 ###############################################################################
 
 
 async def handle_command(command, args, message, bot_client):
     # Check whether the command is supported, stop silently if it's not
-    # (to prevent unnecessary spam if our bot shares the same command prefix
+    # (to prevent unnecesary spam if our bot shares the same command prefix 
     # with some other bot)
-    if command not in COMMAND_HANDLERS:
+    if command not in DMS_HANDLERS:
         return
 
     print(f"{message.author.name}: {settings.COMMAND_PREFIX}{command} " 
           + " ".join(args))
 
     # Retrieve the command
-    cmd_obj = COMMAND_HANDLERS[command]
+    cmd_obj = DMS_HANDLERS[command]
     if cmd_obj.params and len(args) < len(cmd_obj.params):
         await message.channel.send("{} Cette fonction à besoin de minimum {} arguments".format(message.author.mention, len(cmd_obj.params)))
     else:

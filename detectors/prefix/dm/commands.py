@@ -1,5 +1,5 @@
 from config import settings
-from controllers.dm.base_dm import BaseDm
+from detectors.prefix.dm.base_dm import BaseDm
 
 
 # This is a convenient command that automatically generates a helpful
@@ -15,8 +15,8 @@ class Commands(BaseDm):
     async def handle(self, params, message, client):
         # Imported lazily: the prefix routers import command classes, whose
         # help command imports the dm router (no import cycle at load time).
-        from controllers.dm.router import DMS_HANDLERS
-        from controllers.prefix.router import COMMAND_HANDLERS
+        from detectors.prefix.dm.router import DMS_HANDLERS
+        from detectors.prefix.router import COMMAND_HANDLERS
         from views.formatting import render_help
 
         embed = render_help(settings.COMMAND_PREFIX, COMMAND_HANDLERS, DMS_HANDLERS)

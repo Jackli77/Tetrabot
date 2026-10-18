@@ -1,6 +1,6 @@
 import asyncio
 
-from controllers.prefix.base_command import BaseCommand
+from detectors.prefix.base_command import BaseCommand
 
 
 # The !incscore command: shows a paginated leaderboard of all players sorted by equity.

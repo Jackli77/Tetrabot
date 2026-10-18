@@ -1,4 +1,4 @@
-from controllers.prefix.base_command import BaseCommand
+from detectors.prefix.base_command import BaseCommand
 
 
 # The !inc command: displays the user's score, equity, and winrate.

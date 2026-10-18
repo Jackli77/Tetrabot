@@ -1,7 +1,7 @@
 import asyncio
 from config import settings
 
-from controllers.dm.base_dm import BaseDm
+from detectors.prefix.dm.base_dm import BaseDm
 from config.utils import get_channel
 
 

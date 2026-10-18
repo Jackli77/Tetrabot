@@ -1,49 +1,42 @@
-"""CONFIG/start: bot factory — intents, client, events, slash tree.
+"""CONFIG/start: bot factory — intents, client, detectors, slash tree.
 
 ``create_bot()`` builds a ready-to-run :class:`discord.ext.commands.Bot`:
 
 * privileged ``message_content`` intent (enable it in the Developer Portal),
-* slash commands registered on ``bot.tree``
-  (see :mod:`controllers.slash`),
-* Discord events wired to the :mod:`filters` pipeline and the shared
-  :mod:`controllers` logic:
+* the two detectors wired up:
+
+  - :class:`detectors.prefix.PrefixDetector` handles ``!`` messages
+    (``on_message`` / ``on_message_edit`` → ``handle_message``),
+  - :class:`detectors.slash.SlashDetector` registers the native ``/`` tree,
+* Discord lifecycle events:
 
   - ``on_ready`` → sync slash commands, announce readiness, init the DB,
     set the ``NOW_PLAYING`` status,
-  - ``on_message`` / ``on_message_edit`` → :func:`run_filters_message`,
   - ``on_message_delete`` → log deleted content,
   - ``on_voice_state_update`` → announce voice joins/leaves.
+
+Detectors only normalise transports into a shared
+:class:`controllers.CommandContext`; the actual behaviour lives once in
+``controllers.LOGIC``.
 """
 import discord
 from discord.ext import commands
 
 from config import settings
 from config.utils import get_channel
-from controllers import slash as slash_commands
-from filters import default_pipeline
+from detectors.prefix.detector import PrefixDetector, handle_message
+from detectors.slash.detector import SlashDetector
 from models import db as models_db
 
 
-async def run_filters_message(message, bot_client):
-    """Run an incoming message through the filters pipeline, then dispatch.
+async def run_prefix_message(message, bot_client, detector: PrefixDetector | None = None):
+    """Run an incoming message through the ``!`` detector, then dispatch.
 
-    Replaces the old inline ``common_handle_message``: every step (ignore
-    self, DM vs guild routing, ``!`` parsing) is a composable filter.
+    Thin wrapper around :func:`detectors.prefix.detector.handle_message`
+    kept here so events stay one-liners and tests can import a stable entry
+    point from ``config.start``.
     """
-    result = await default_pipeline(prefix=settings.COMMAND_PREFIX).run(message, bot_client)
-    if not result.proceed or result.command is None:
-        return
-    handler = result.handler
-    if handler is None:
-        from controllers.dm.router import handle_command as handle_dm_command
-        from controllers.prefix.router import handle_command as handle_guild_command
-
-        handler = handle_dm_command if result.extra.get("dm") else handle_guild_command
-    try:
-        await handler(result.command, result.args, message, bot_client)
-    except Exception:
-        print("Error while handling message", flush=True)
-        raise
+    return await handle_message(message, bot_client, detector=detector)
 
 
 def create_bot() -> commands.Bot:
@@ -54,8 +47,12 @@ def create_bot() -> commands.Bot:
     print("Starting up...")
     bot_client = commands.Bot(command_prefix=settings.COMMAND_PREFIX, intents=intents)
 
-    # Register Slash Commands into the bot tree
-    slash_commands.setup_slash_commands(bot_client, bot_client.tree)
+    # Detectors: one per invocation style, both feeding the same LOGIC.
+    prefix_detector = PrefixDetector()
+    slash_detector = SlashDetector()
+
+    # Register Slash Commands into the bot tree via the / detector.
+    slash_detector.setup(bot_client, bot_client.tree)
 
     # Track if on_ready has already executed to prevent double execution on reconnects
     has_started = False
@@ -94,11 +91,11 @@ def create_bot() -> commands.Bot:
 
     @bot_client.event
     async def on_message(message):
-        await run_filters_message(message, bot_client)
+        await run_prefix_message(message, bot_client, detector=prefix_detector)
 
     @bot_client.event
     async def on_message_edit(before, after):
-        await run_filters_message(after, bot_client)
+        await run_prefix_message(after, bot_client, detector=prefix_detector)
 
     @bot_client.event
     async def on_message_delete(message):
@@ -132,4 +129,4 @@ def main():
     bot_client.run(settings.BOT_TOKEN)
 
 
-__all__ = ["create_bot", "main", "run_filters_message"]
+__all__ = ["create_bot", "main", "run_prefix_message"]

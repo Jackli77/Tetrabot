@@ -1,4 +1,4 @@
-from controllers.prefix.base_command import BaseCommand
+from detectors.prefix.base_command import BaseCommand
 
 
 # The !aup command: pings a target and repeatedly asks them to come ("au pied").

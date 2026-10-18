@@ -5,15 +5,14 @@ import sys
 # Make the project root importable regardless of the current directory.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from tests import test_db_updates, test_filters, test_models, test_transport, test_views
+from tests import test_db_updates, test_detectors, test_models, test_views
 
 
 def main():
     test_models.run()
     test_views.run()
-    test_transport.run()
+    test_detectors.run()
     test_db_updates.run()
-    test_filters.run()
     print("ALL TESTS PASSED")
 
 
