@@ -3,7 +3,6 @@ from detectors.prefix.dm.base_dm import BaseDm
 # This, in addition to the discovery below,
 # imports all classes inside the detectors.prefix.dm package.
 from detectors.prefix.dm import commands as dm_commands_module
-from detectors.prefix.dm import hot as dm_hot_module
 
 from config import settings
 

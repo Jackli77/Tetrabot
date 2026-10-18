@@ -56,9 +56,8 @@ def check_imports():
 
     expected = {"inc", "random", "aup", "clean", "incscore", "commands", "gamble", "crit"}
     assert expected.issubset(set(COMMAND_HANDLERS)), set(COMMAND_HANDLERS)
-    assert "hot" in DMS_HANDLERS and "commands" in DMS_HANDLERS
+    assert set(DMS_HANDLERS) == {"commands"}, set(DMS_HANDLERS)
     assert len(LOGIC) == 8, sorted(LOGIC)
-    assert "hot" not in LOGIC
 
 
 def check_registry():

@@ -21,7 +21,6 @@ NOW_PLAYING = COMMAND_PREFIX + "commands"
 CHANNEL_BOT_ACTIVITY = "botactivity"
 CHANNEL_DELETED       = "deleted"
 CHANNEL_VOICE         = "voice"
-CHANNEL_WAIFU         = "waifu"
 
 # Base directory. Feel free to use it if you want.
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))

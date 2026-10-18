@@ -73,7 +73,7 @@ Tetrabot/
 │   │   ├── detector.py  #   PrefixDetector + handle_message (dispatch)
 │   │   ├── base_command.py # Classe de base + dispatch générique vers LOGIC
 │   │   ├── router.py    #   Routage des messages ! vers les commandes
-│   │   ├── dm/          #   Commandes ! en message privé (hot, commands)
+│   │   ├── dm/          #   Commandes ! en message privé (commands)
 │   │   └── ...          #   Adapteurs ! (gamble, crit, clean, ...)
 │   └── slash/           #   Détecteur / : enregistrement de l'arbre slash
 │       └── detector.py  #   SlashDetector + 9 wrappers fins vers LOGIC

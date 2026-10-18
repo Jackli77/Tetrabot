@@ -22,12 +22,12 @@ def check_prefix_detector_steps():
 
     dm_channel = FakeChannel()
     dm_author = FakeAuthor(dm_channel=dm_channel)
-    dm_message = make_message("!hot 10 2", author=dm_author, channel=dm_channel)
+    dm_message = make_message("!commands", author=dm_author, channel=dm_channel)
     result = asyncio.run(detector.detect(dm_message, bot))
     assert result.handled is True
     assert result.extra["dm"] is True
     assert result.handler is handle_dm_command
-    assert result.command == "hot" and result.args == ["10", "2"]
+    assert result.command == "commands" and result.args == []
 
     guild_message = make_message("!GAMBLE 50")
     result = asyncio.run(detector.detect(guild_message, bot))
@@ -56,7 +56,7 @@ def check_prefix_detector_dispatch():
 
     detector = PrefixDetector()
     orig_guild = COMMAND_HANDLERS.get("inc")
-    orig_dm = DMS_HANDLERS.get("hot")
+    orig_dm = DMS_HANDLERS.get("commands")
 
     class FakeGuildCmd:
         params = None
@@ -68,17 +68,17 @@ def check_prefix_detector_dispatch():
         params = None
 
         async def handle(self, args, message, bot_client):
-            await fake_dm_handler("hot", args, message, bot_client)
+            await fake_dm_handler("commands", args, message, bot_client)
 
     COMMAND_HANDLERS["inc"] = FakeGuildCmd()
-    DMS_HANDLERS["hot"] = FakeDmCmd()
+    DMS_HANDLERS["commands"] = FakeDmCmd()
     try:
         bot = FakeBot()
         asyncio.run(handle_message(make_message("!inc"), bot, detector=detector))
         dm_channel = FakeChannel()
         dm_author = FakeAuthor(dm_channel=dm_channel)
         asyncio.run(handle_message(
-            make_message("!hot 1 2", author=dm_author, channel=dm_channel),
+            make_message("!commands", author=dm_author, channel=dm_channel),
             bot, detector=detector,
         ))
         asyncio.run(handle_message(make_message("hello"), bot, detector=detector))
@@ -89,11 +89,11 @@ def check_prefix_detector_dispatch():
         else:
             COMMAND_HANDLERS["inc"] = orig_guild
         if orig_dm is None:
-            DMS_HANDLERS.pop("hot", None)
+            DMS_HANDLERS.pop("commands", None)
         else:
-            DMS_HANDLERS["hot"] = orig_dm
+            DMS_HANDLERS["commands"] = orig_dm
 
-    assert seen == [("guild", "inc", []), ("dm", "hot", ["1", "2"])], seen
+    assert seen == [("guild", "inc", []), ("dm", "commands", [])], seen
 
 
 def check_legacy_imports_are_gone():
