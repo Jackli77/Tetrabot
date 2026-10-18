@@ -1,10 +1,10 @@
-from commands.base_command  import BaseCommand
+from controllers.prefix.base_command import BaseCommand
 
-# This, in addition to tweaking __all__ on commands/__init__.py, 
-# imports all classes inside the commands package.
-from commands               import *
+# This, in addition to the discovery below,
+# imports all classes inside the controllers.prefix package.
+from controllers.prefix import aup, clean, commands, crit, gamble, inc, incscore, random
 
-import settings
+from config import settings
 
 # Register all available commands (including aliases)
 COMMAND_HANDLERS = {}

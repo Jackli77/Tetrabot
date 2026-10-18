@@ -1,4 +1,4 @@
-from commands.base_command import BaseCommand
+from controllers.prefix.base_command import BaseCommand
 
 
 # The !random command: rolls a random number between 1 and 100 (or custom bounds if given).

@@ -5,7 +5,7 @@ from discord import ui
 # --- UI View for /gamble challenge button ---
 # Shows an "Accepter le Gamble" button that lets another user accept a gamble duel.
 class GambleChallengeView(ui.View):
-    def __init__(self, challenger: discord.User, upper: int, client: discord.Client):
+    def __init__(self, challenger: discord.User, upper: int, client: discord.Client | None = None):
         super().__init__(timeout=45.0)
         self.challenger = challenger        # User who initiated the gamble
         self.upper = upper                  # Maximum roll value
@@ -30,7 +30,7 @@ class GambleChallengeView(ui.View):
 # --- UI View for /crit challenge button ---
 # Shows an "Accepter le Crit" button that lets another user accept a critical-hit duel.
 class CritChallengeView(ui.View):
-    def __init__(self, challenger: discord.User, argent: int, client: discord.Client):
+    def __init__(self, challenger: discord.User, argent: int, client: discord.Client | None = None):
         super().__init__(timeout=45.0)
         self.challenger = challenger        # User who initiated the crit duel
         self.argent = argent                # Stake amount

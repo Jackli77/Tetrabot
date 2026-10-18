@@ -1,4 +1,4 @@
-from commands.base_command import BaseCommand
+from controllers.prefix.base_command import BaseCommand
 
 
 # The !clean command: deletes a given number of recent messages in the channel.

@@ -13,5 +13,5 @@ def get_channel(client: discord.Client, value: str, attribute: str = "name") -> 
         None
     )
     if not channel:
-        print(f"WARNING: channel '{value}' not found — check CHANNEL_* names in settings.py", flush=True)
+        print(f"WARNING: channel '{value}' not found — check CHANNEL_* names in config/settings.py", flush=True)
     return channel

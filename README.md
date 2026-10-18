@@ -8,6 +8,7 @@ Un bot Discord modulaire en Python intégrant des **Slash Commands Discord (`/`)
 
 - **Slash Commands & UI Modernes :** Support natif des commandes slash (`/`) avec autocomplétion, descriptions, et composants interactifs (boutons `discord.ui.Button` pour la pagination et l'acceptation de défis).
 - **Base de données MongoDB :** Driver asynchrone Motor pour le stockage des statistiques de jeu, de l'historique et des classements.
+- **Filtres de messages :** Pipeline composable (`filters/`) — ignore les messages du bot, route DM vs serveur, puis parse le préfixe `!`.
 - **Jeux d'argent & Duels :**
   - `/gamble <limite>` : Défi de roulette cappée contre un autre joueur.
   - `/crit <somme> [odds]` : Duel de coups critiques (chafer) avec relance automatique en cas d'égalité.
@@ -52,49 +53,64 @@ Sur Windows, double-cliquez simplement sur **`run.bat`** ou exécutez :
 .venv\Scripts\python tetrabot.py
 ```
 
+### 4. Lancer les tests
+```bash
+python tests\run_all.py
+```
+
 ---
 
 ## 📂 Structure du Projet
 
 ```text
 Tetrabot/
-├── controllers/         # COUCHE CONTRÔLEUR — logique métier des commandes
+├── config/              # CONFIG/START — démarrage et réglages
+│   ├── settings.py      #   Variables d'environnement (.env) et constantes
+│   ├── utils.py         #   Helpers partagés (recherche de salons, ...)
+│   └── start.py         #   Fabrique du bot : intents, events, slash tree
+├── filters/             # FILTRES — pipeline des messages entrants
+│   ├── base.py          #   FilterResult + classe de base MessageFilter
+│   ├── self_messages.py #   Ignore les messages du bot lui-même
+│   ├── direct_messages.py # Route DM vs serveur
+│   ├── prefix.py        #   Parse le préfixe !command args
+│   └── pipeline.py      #   Chaînage (default_pipeline)
+├── controllers/         # CONTRÔLEURS — logique métier des commandes
 │   ├── context.py       #   CommandContext + fabriques de "respond" (! et /)
 │   ├── commands.py      #   Les fonctions cmd_* (source unique pour ! et /)
-│   └── registry.py      #   Registre LOGIC (auto-collecte des cmd_*)
-├── models/              # COUCHE MODÈLE — accès données et règles pures
+│   ├── registry.py      #   Registre LOGIC (auto-collecte des cmd_*)
+│   ├── slash.py         #   Adapteurs Slash natifs (/), thin wrappers
+│   ├── prefix/          #   Adapteurs préfixe (!gamble, !crit, !clean, etc.)
+│   │   ├── base_command.py # Classe de base + dispatch générique vers LOGIC
+│   │   ├── router.py    #   Routage des messages préfixe vers les commandes
+│   │   └── ...
+│   └── dm/              #   Commandes spécifiques aux messages privés
+│       ├── base_dm.py
+│       ├── router.py    #   Routage des messages privés
+│       └── hot.py
+├── models/              # MODÈLES — accès données et règles pures
 │   ├── db.py            #   Connexion MongoDB Atlas (Motor) et collections
 │   ├── stats.py         #   Stats, winrate, leaderboard, enregistrement
 │   └── duels.py         #   Règles de duel gamble/crit (pures, testables)
-├── views/               # COUCHE VUE — rendu pur, jamais d'accès BDD
+├── views/               # VUES — rendu pur, jamais d'accès BDD
 │   ├── formatting.py    #   Renderers (messages et embeds)
 │   ├── leaderboard.py   #   View de pagination du classement
 │   └── challenge.py     #   Views de défi (boutons Gamble/Crit)
-├── commands/            # Adapteurs préfixe (!gamble, !crit, !clean, etc.)
-│   ├── base_command.py  #   Classe de base + dispatch générique vers LOGIC
-│   └── ...
-├── dms/                 # Commandes spécifiques aux messages privés
-│   ├── base_dm.py
-│   └── hot.py
-├── tests/               # Tests par couche (modèles, renderers, transports)
+├── tests/               # Tests par couche (modèles, renderers, transports, filtres)
 │   └── run_all.py       #   python tests\run_all.py
-├── slash_commands.py    # Adapteurs Slash natives (/), thin wrappers
-├── message_handler.py   # Routage des messages préfixe vers les commandes
-├── dms_handler.py       # Routage des messages privés
-├── tetrabot.py          # Point d'entrée principal du bot
-├── settings.py          # Configuration centralisée et variables d'environnement
-├── utils.py             # Fonctions utilitaires (recherche de salons, etc.)
+├── tetrabot.py          # Point d'entrée (délègue à config.start)
 ├── run.bat              # Lanceur Windows en un clic
 ├── requirements.txt     # Dépendances Python modernes
 └── .env.example         # Modèle de configuration sécurisé
 ```
 
-> **Architecture MVC (Model-View-Presenter)** : chaque commande n'est
-> implémentée **qu'une seule fois** dans `controllers/commands.py` et sert
-> aussi bien au préfixe `!` qu'aux slash-commands `/`. Les modèles ne
-> dépendent jamais de Discord, les vues n'accèdent jamais à la base de
-> données, et les contrôleurs orchestrent les deux puis rendent via
-> `ctx.respond(...)`.
+> **Architecture MVC (Model-View-Controller) + Filtres + Config/Start** :
+> chaque commande n'est implémentée **qu'une seule fois** dans
+> `controllers/commands.py` et sert aussi bien au préfixe `!` qu'aux
+> slash-commands `/`. Les modèles ne dépendent jamais de Discord, les vues
+> n'accèdent jamais à la base de données, et les contrôleurs orchestrent les
+> deux puis rendent via `ctx.respond(...)`. En amont, chaque message `!`
+> traverse le pipeline `filters/` (ignore-self → routage DM/serveur →
+> parsing du préfixe) et le démarrage vit dans `config/start.py`.
 
 
 ---
@@ -102,3 +118,4 @@ Tetrabot/
 ## 📜 Licence
 
 Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
+

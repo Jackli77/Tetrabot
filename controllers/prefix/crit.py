@@ -1,6 +1,6 @@
 import asyncio
 
-from commands.base_command import BaseCommand
+from controllers.prefix.base_command import BaseCommand
 
 
 # The !crit command: starts a "critical hit" duel between the author and the

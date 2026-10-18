@@ -1,5 +1,5 @@
-import settings
-from dms.base_dm import BaseDm
+from config import settings
+from controllers.dm.base_dm import BaseDm
 
 
 # This is a convenient command that automatically generates a helpful
@@ -13,10 +13,10 @@ class Commands(BaseDm):
         super().__init__(description, params)
 
     async def handle(self, params, message, client):
-        # Imported lazily: message_handler imports the commands package, whose
-        # help command imports dms_handler (no import cycle at load time).
-        from message_handler import COMMAND_HANDLERS
-        from dms_handler import DMS_HANDLERS
+        # Imported lazily: the prefix routers import command classes, whose
+        # help command imports the dm router (no import cycle at load time).
+        from controllers.dm.router import DMS_HANDLERS
+        from controllers.prefix.router import COMMAND_HANDLERS
         from views.formatting import render_help
 
         embed = render_help(settings.COMMAND_PREFIX, COMMAND_HANDLERS, DMS_HANDLERS)

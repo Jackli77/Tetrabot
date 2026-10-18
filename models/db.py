@@ -1,5 +1,5 @@
 """MODEL infrastructure: async MongoDB connection and collections."""
-import settings
+from config import settings
 from motor.motor_asyncio import AsyncIOMotorClient
 
 # Create the async Motor client from the URI in .env

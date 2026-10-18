@@ -11,8 +11,8 @@ touches ``message``/``interaction`` directly.
 
 To add a new command:
     1. Write ``async def cmd_foo(ctx)`` here (auto-registered in ``LOGIC``).
-    2. Add a metadata-only prefix class in ``commands/foo.py``.
-    3. Add a thin slash wrapper in ``slash_commands.py``.
+    2. Add a metadata-only prefix class in ``controllers/prefix/foo.py``.
+    3. Add a thin slash wrapper in ``controllers/slash.py``.
 """
 from __future__ import annotations
 
@@ -219,9 +219,9 @@ async def cmd_crit(ctx: CommandContext, opponent: discord.User, argent: int, odd
 
 async def cmd_help(ctx: CommandContext):
     """List available commands (shared by /commands and !commands)."""
-    # Imported lazily: message_handler imports the commands package, whose
-    # classes dispatch back into this module (no import cycle at load time).
-    from dms_handler import DMS_HANDLERS
-    from message_handler import COMMAND_HANDLERS
+    # Imported lazily: the prefix/dm routers import command classes, whose
+    # handlers dispatch back into this module (no import cycle at load time).
+    from controllers.dm.router import DMS_HANDLERS
+    from controllers.prefix.router import COMMAND_HANDLERS
 
     await ctx.respond(embed=fmt.render_help(ctx.prefix, COMMAND_HANDLERS, DMS_HANDLERS))

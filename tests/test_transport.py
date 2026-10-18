@@ -7,26 +7,37 @@ import asyncio
 
 from controllers import LOGIC, CommandContext, make_prefix_respond, make_slash_respond
 from controllers.context import CommandContext as ContextFromSubmodule
-from slash_commands import build_context as build_slash_context
-from slash_commands import setup_slash_commands
-from commands.base_command import BaseCommand
-from commands.gamble import gamble
-from commands.crit import crit
-from commands.incscore import incscore
+from controllers.slash import build_context as build_slash_context
+from controllers.slash import setup_slash_commands
+from controllers.prefix.base_command import BaseCommand
+from controllers.prefix.gamble import gamble
+from controllers.prefix.crit import crit
+from controllers.prefix.incscore import incscore
 
 
 def check_imports():
     """The whole MVC stack must import cleanly and registries must be full."""
+    import config.settings
+    import config.start
+    import config.utils
     import controllers
     import controllers.commands
+    import controllers.dm.router
+    import controllers.prefix.router
+    import controllers.slash
+    import filters.base
+    import filters.direct_messages
+    import filters.pipeline
+    import filters.prefix
+    import filters.self_messages
     import models.db
     import models.duels
     import models.stats
     import views.challenge
     import views.formatting
     import views.leaderboard
-    from message_handler import COMMAND_HANDLERS
-    from dms_handler import DMS_HANDLERS
+    from controllers.prefix.router import COMMAND_HANDLERS
+    from controllers.dm.router import DMS_HANDLERS
 
     expected = {"inc", "random", "aup", "clean", "incscore", "commands", "gamble", "crit"}
     assert expected.issubset(set(COMMAND_HANDLERS)), set(COMMAND_HANDLERS)
@@ -228,10 +239,17 @@ def check_slash_dispatch_and_context():
 
 
 def check_legacy_imports_are_gone():
-    """command_logic/database_init no longer exist after the MVC refactor."""
+    """Old flat modules no longer exist after the MVC refactor."""
     import importlib.util
     assert importlib.util.find_spec("command_logic") is None
     assert importlib.util.find_spec("database_init") is None
+    assert importlib.util.find_spec("message_handler") is None
+    assert importlib.util.find_spec("dms_handler") is None
+    assert importlib.util.find_spec("slash_commands") is None
+    assert importlib.util.find_spec("settings") is None
+    assert importlib.util.find_spec("utils") is None
+    assert importlib.util.find_spec("commands") is None
+    assert importlib.util.find_spec("dms") is None
 
 
 def run():

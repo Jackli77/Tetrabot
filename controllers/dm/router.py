@@ -1,10 +1,11 @@
-from dms.base_dm import BaseDm
+from controllers.dm.base_dm import BaseDm
 
-# This, in addition to tweaking __all__ on dms/__init__.py, 
-# imports all classes inside the dms package.
-from dms                    import *
+# This, in addition to the discovery below,
+# imports all classes inside the controllers.dm package.
+from controllers.dm import commands as dm_commands_module
+from controllers.dm import hot as dm_hot_module
 
-import settings
+from config import settings
 
 # Register all available commands
 DMS_HANDLERS = {c.__name__.lower(): c()

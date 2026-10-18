@@ -1,7 +1,8 @@
 import asyncio
-import settings
-from dms.base_dm import BaseDm
-from utils import get_channel
+from config import settings
+
+from controllers.dm.base_dm import BaseDm
+from config.utils import get_channel
 
 
 class hot(BaseDm):

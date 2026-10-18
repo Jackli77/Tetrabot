@@ -1,4 +1,4 @@
-import settings
+from config import settings
 
 
 class BaseCommand:

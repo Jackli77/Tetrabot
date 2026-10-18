@@ -1,6 +1,6 @@
 import asyncio
 
-from commands.base_command import BaseCommand
+from controllers.prefix.base_command import BaseCommand
 
 
 # The !gamble command: challenges another user to a dice-roll duel.
