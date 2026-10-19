@@ -14,13 +14,18 @@ import aiohttp
 from config import settings
 
 
-def _build_messages(context: list[str], prompt: str) -> list[dict[str, str]]:
-    """Build an Ollama ``messages`` array from recent context + the new prompt.
+def _build_messages(
+    context: list[str], prompt: str, system: str | None = None
+) -> list[dict[str, str]]:
+    """Build an Ollama ``messages`` array from system prompt + context + prompt.
 
-    Context lines and the prompt are all sent as ``user`` messages so the model
-    can reason over the whole recent conversation.
+    Context lines and the prompt are sent as ``user`` messages so the model
+    can reason over the whole recent conversation.  A short ``system``
+    prompt frames the task (chatbot role, tone, language).
     """
     messages: list[dict[str, str]] = []
+    if system:
+        messages.append({"role": "system", "content": system.strip()})
     for line in context:
         line = line.strip()
         if line:
@@ -29,18 +34,26 @@ def _build_messages(context: list[str], prompt: str) -> list[dict[str, str]]:
     return messages
 
 
-async def ask_ollama(prompt: str, context: list[str] | None = None) -> str:
+async def ask_ollama(
+    prompt: str,
+    context: list[str] | None = None,
+    system: str | None = None,
+) -> str:
     """Ask the local Ollama model and return its answer text.
 
     ``context`` is an optional list of recent message lines (author-prefixed)
-    supplied as conversation history.  Raises on any HTTP/JSON/network failure.
+    supplied as conversation history.  ``system`` is an optional short system
+    prompt framing the chat.  Raises on any HTTP/JSON/network failure.
     """
     url = f"{settings.OLLAMA_HOST.rstrip('/')}/api/chat"
     payload = {
         "model": settings.OLLAMA_MODEL,
-        "messages": _build_messages(context or [], prompt),
+        "messages": _build_messages(context or [], prompt, system),
         "stream": False,
-        "options": {"temperature": 0.7, "num_predict": 512},
+        # Generous budget: qwen3 is a thinking model whose reasoning is
+        # generated first and counts against num_predict — a small budget
+        # leaves no tokens for the final answer (empty `content`).
+        "options": {"temperature": 0.7, "num_predict": 2048},
     }
 
     timeout = aiohttp.ClientTimeout(total=120)

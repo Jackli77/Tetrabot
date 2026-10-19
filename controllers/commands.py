@@ -83,6 +83,19 @@ async def cmd_aup(ctx: CommandContext):
     await ctx.respond(content=fmt.render_aup_call(toutou))
 
 
+# Frames the model: chatbot role, conversational tone, answer the last
+# message (in the language of the conversation) instead of analysing it.
+CHAT_SYSTEM_PROMPT = (
+    "You are a friendly Discord chatbot. The channel history is provided as "
+    "context. Reply to the most recent message, in the same language as the "
+    "conversation, in a short conversational tone. Do not analyse the "
+    "conversation, do not use markdown tables."
+)
+
+# Discord's message limit; a budget of 2048 tokens can exceed it.
+DISCORD_CHAR_LIMIT = 2000
+
+
 async def cmd_chat(ctx: CommandContext):
     """Chat with the local Ollama LLM: send the user's message, answer in-channel.
 
@@ -107,7 +120,7 @@ async def cmd_chat(ctx: CommandContext):
     )
 
     try:
-        answer = await ollama.ask_ollama(prompt, context)
+        answer = await ollama.ask_ollama(prompt, context, system=CHAT_SYSTEM_PROMPT)
     except Exception:
         print(f"Ollama chat failed:\n{traceback.format_exc()}", flush=True)
         await ctx.respond(
@@ -117,6 +130,9 @@ async def cmd_chat(ctx: CommandContext):
             )
         )
         return
+
+    if len(answer) > DISCORD_CHAR_LIMIT:
+        answer = answer[: DISCORD_CHAR_LIMIT - 1] + "…"
 
     await ctx.respond(content=fmt.render_chat(answer))
 
