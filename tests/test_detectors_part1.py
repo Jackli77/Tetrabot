@@ -54,10 +54,10 @@ def check_imports():
     from detectors.prefix.dm.router import DMS_HANDLERS
     from detectors.prefix.router import COMMAND_HANDLERS
 
-    expected = {"inc", "random", "aup", "clean", "incscore", "commands", "gamble", "crit"}
+    expected = {"inc", "random", "aup", "clean", "incscore", "commands", "gamble", "crit", "chat"}
     assert expected.issubset(set(COMMAND_HANDLERS)), set(COMMAND_HANDLERS)
     assert set(DMS_HANDLERS) == {"commands"}, set(DMS_HANDLERS)
-    assert len(LOGIC) == 8, sorted(LOGIC)
+    assert len(LOGIC) == 9, sorted(LOGIC)
 
 
 def check_registry():

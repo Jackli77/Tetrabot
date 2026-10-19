@@ -14,6 +14,7 @@ Un bot Discord modulaire en Python intégrant des **Slash Commands Discord (`/`)
   - `/crit <somme> [odds]` : Duel de coups critiques (chafer) avec relance automatique en cas d'égalité.
   - `/incscore` (ou `/leaderboard`) : Tableau des scores et classement par équité avec pagination par boutons.
   - `/random [min] [max]` : Tirage de nombres aléatoires.
+  - `/chat <message>` : Envoie le message au chatbot local **Ollama** (`qwen3:4b`) et affiche sa réponse dans le salon.
 - **Utilitaires serveur :**
   - `/clean <nombre>` : Purge rapide et silencieuse de messages avec confirmation éphémère.
   - `/commands` : Menu d'aide interactif complet sous forme d'Embed.
@@ -76,7 +77,7 @@ Tetrabot/
 │   │   ├── dm/          #   Commandes ! en message privé (commands)
 │   │   └── ...          #   Adapteurs ! (gamble, crit, clean, ...)
 │   └── slash/           #   Détecteur / : enregistrement de l'arbre slash
-│       └── detector.py  #   SlashDetector + 9 wrappers fins vers LOGIC
+│       └── detector.py  #   SlashDetector + 10 wrappers fins vers LOGIC
 ├── controllers/         # CONTRÔLEURS — logique métier partagée (une seule fois)
 │   ├── context.py       #   CommandContext + fabriques de "respond" (! et /)
 │   ├── commands.py      #   Les fonctions cmd_* (source unique pour ! et /)

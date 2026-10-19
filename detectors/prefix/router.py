@@ -2,7 +2,7 @@ from detectors.prefix.base_command import BaseCommand
 
 # This, in addition to the discovery below,
 # imports all classes inside the detectors.prefix package.
-from detectors.prefix import aup, clean, commands, crit, gamble, inc, incscore, random
+from detectors.prefix import aup, chat, clean, commands, crit, gamble, inc, incscore, random
 
 from config import settings
 

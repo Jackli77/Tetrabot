@@ -169,3 +169,11 @@ def setup_slash_commands(bot: discord.Client, tree: app_commands.CommandTree):
     async def cmd_inc(interaction: discord.Interaction):
         ctx = build_context(interaction)
         await LOGIC["cmd_inc"](ctx)
+
+    # 10. /chat — Forwards the user's message to the local Ollama LLM (qwen3:4b)
+    # and replies in the channel with the generated answer.
+    @tree.command(name="chat", description="Envoie ton message au chatbot local (Ollama) et affiche sa réponse")
+    @app_commands.describe(message="Le message à envoyer au chatbot")
+    async def cmd_chat(interaction: discord.Interaction, message: str):
+        ctx = build_context(interaction, args=[message])
+        await LOGIC["cmd_chat"](ctx)

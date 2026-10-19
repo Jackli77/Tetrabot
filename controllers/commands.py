@@ -18,12 +18,14 @@ To add a new command:
 from __future__ import annotations
 
 import random
+import traceback
 from asyncio import sleep
 
 import discord
 
+from config import settings
 from controllers.context import CommandContext
-from models import duels
+from models import duels, ollama
 from models.stats import get_stats, leaderboard, record_result
 from views import formatting as fmt
 
@@ -79,6 +81,44 @@ async def cmd_aup(ctx: CommandContext):
     await ctx.respond(content=fmt.render_aup_urge(toutou))
     await sleep(5)
     await ctx.respond(content=fmt.render_aup_call(toutou))
+
+
+async def cmd_chat(ctx: CommandContext):
+    """Chat with the local Ollama LLM: send the user's message, answer in-channel.
+
+    Uses the recent channel history as conversation context so the model can
+    follow the ongoing discussion.
+    """
+    if not ctx.args:
+        await ctx.respond(content="Ecris quelque chose à envoyer au chatbot.")
+        return
+
+    prompt = " ".join(ctx.args)
+
+    # Recent channel messages (author-prefixed) become the conversation context.
+    context = [
+        f"{m.author.name}: {m.content}"
+        async for m in ctx.channel.history(limit=settings.CHAT_CONTEXT_MESSAGES)
+    ]
+
+    # Acknowledge immediately — a local 4B model can take a while to answer.
+    await ctx.respond(
+        content=f"🤖 En train de générer une réponse avec **{settings.OLLAMA_MODEL}**..."
+    )
+
+    try:
+        answer = await ollama.ask_ollama(prompt, context)
+    except Exception:
+        print(f"Ollama chat failed:\n{traceback.format_exc()}", flush=True)
+        await ctx.respond(
+            content=(
+                "😞 Ollama n'a pas répondu — vérifie que le serveur est "
+                f"démarré sur `{settings.OLLAMA_HOST}`."
+            )
+        )
+        return
+
+    await ctx.respond(content=fmt.render_chat(answer))
 
 
 async def cmd_clean(ctx: CommandContext):

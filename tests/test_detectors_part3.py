@@ -114,12 +114,12 @@ def check_slash_dispatch_and_context():
 
     tree = FakeTree()
     setup_slash_commands("BOT", tree)
-    assert len(tree.commands) == 9, sorted(tree.commands)
+    assert len(tree.commands) == 10, sorted(tree.commands)
 
     tree2 = FakeTree()
     detector = SlashDetector(bot="BOT")
     detector.setup("BOT", tree2)
-    assert len(tree2.commands) == 9, sorted(tree2.commands)
+    assert len(tree2.commands) == 10, sorted(tree2.commands)
     assert detector.bot == "BOT"
 
     orig = LOGIC["cmd_inc"]
