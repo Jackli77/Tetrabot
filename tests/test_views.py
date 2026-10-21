@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 
+import discord
 import pytest
 
 from tetrabot import catalog
@@ -76,6 +77,21 @@ class TestCritRendering:
             "Le duel s'est terminé après **4** manches et **1** égalités"
         )
         assert "**W**, **L** doit donner **40**" in outcome
+
+
+class TestSharedControllerReplies:
+    """The renderers the controllers use for their own replies."""
+
+    def test_render_missing_arguments(self):
+        assert fmt.render_missing_arguments("<@1>", 1) == (
+            "<@1> Cette fonction à besoin de minimum 1 arguments"
+        )
+
+    def test_render_challenge_embed(self):
+        embed = fmt.render_challenge_embed("🎲 Duel Gamble", "**<@1>** lance un gamble")
+        assert embed.title == "🎲 Duel Gamble"
+        assert embed.description == "**<@1>** lance un gamble"
+        assert embed.colour == discord.Colour.gold()
 
 
 class TestHelpEmbed:

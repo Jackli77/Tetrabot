@@ -1,13 +1,15 @@
-"""VIEW layer: pure rendering plus Discord UI widgets.
+"""VIEW layer: pure rendering, Discord UI widgets and output adapters.
 
 ``formatting`` turns data into strings and embeds; ``widgets`` holds the
-interactive ``discord.ui`` views.  Neither of them queries the database or
-contains command rules.
+interactive ``discord.ui`` views; ``responders`` adapts a Discord message
+or interaction to one tiny output interface.  None of them query the
+database or contain command rules.
 """
-from tetrabot.views import formatting, widgets
+from tetrabot.views import formatting, responders, widgets
 from tetrabot.views.formatting import (
     render_aup_call,
     render_aup_urge,
+    render_challenge_embed,
     render_chat,
     render_crit_escalation,
     render_crit_hit,
@@ -20,18 +22,24 @@ from tetrabot.views.formatting import (
     render_gamble_winner,
     render_help,
     render_leaderboard_pages,
+    render_missing_arguments,
     render_roulette,
     render_score,
     render_stats,
 )
+from tetrabot.views.responders import PrefixResponder, Responder, SlashResponder
 from tetrabot.views.widgets import ChallengeView, LeaderboardPaginationView
 
 __all__ = [
     "ChallengeView",
     "LeaderboardPaginationView",
+    "PrefixResponder",
+    "Responder",
+    "SlashResponder",
     "formatting",
     "render_aup_call",
     "render_aup_urge",
+    "render_challenge_embed",
     "render_chat",
     "render_crit_escalation",
     "render_crit_hit",
@@ -44,8 +52,10 @@ __all__ = [
     "render_gamble_winner",
     "render_help",
     "render_leaderboard_pages",
+    "render_missing_arguments",
     "render_roulette",
     "render_score",
     "render_stats",
+    "responders",
     "widgets",
 ]

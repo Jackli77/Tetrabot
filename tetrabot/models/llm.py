@@ -1,7 +1,7 @@
 """An async client for a local Ollama LLM.
 
 Pure I/O wrapper around the Ollama ``/api/chat`` HTTP endpoint — no Discord,
-views, or command logic here.  The server address and model come from
+views, or command handlers here.  The server address and model come from
 :mod:`tetrabot.config`.  Raises on any network/HTTP/JSON failure so the caller
 can decide how to report the error.
 """

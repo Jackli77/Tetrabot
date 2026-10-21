@@ -8,7 +8,8 @@ Un bot Discord modulaire en Python intégrant des **Slash Commands Discord (`/`)
 
 - **Slash Commands & UI Modernes :** Support natif des commandes slash (`/`) avec autocomplétion, descriptions, et composants interactifs (boutons `discord.ui.Button` pour la pagination et l'acceptation de défis).
 - **Base de données MongoDB :** Driver asynchrone Motor pour le stockage des statistiques de jeu, de l'historique et des classements.
-- **Détecteurs `!` et `/` :** Deux détecteurs (`tetrabot/detectors/`) reconnaissent chaque style d'invocation, construisent le même `CommandContext`, et appellent la même logique partagée (`tetrabot/commands/`).
+- **Architecture MVC :** Le code est réparti en trois couches à dépendances strictes — `models/` (données et règles métier), `views/` (rendu, widgets, adaptateurs de sortie) et `controllers/` (pipeline de requête et handlers partagés). Un test automatisé (`tests/test_controllers.py::TestArchitecture`) vérifie qu'aucune couche ne dépend d'une couche supérieure.
+- **Contrôleurs `!` et `/` :** Deux contrôleurs (`tetrabot/controllers/`) reconnaissent chaque style d'invocation, construisent le même `CommandContext`, et appellent le même handler partagé (`tetrabot/controllers/commands/`).
 - **Catalogue de commandes :** Une seule source de vérité (`tetrabot/catalog.py`) décrit chaque commande ; le routeur `!`, l'arbre `/` et l'embed d'aide en sont générés. Une commande ne peut donc pas exister sur un seul transport par inadvertance.
 - **Jeux d'argent & Duels :**
   - `/gamble <limite>` : Défi de roulette cappée contre un autre joueur.
@@ -70,23 +71,24 @@ Tetrabot/
 │   ├── app.py              #   Fabrique du bot : intents, événements, arbre slash
 │   ├── config.py           #   Réglages (variables d'environnement et constantes)
 │   ├── catalog.py          #   CATALOGUE — la description de chaque commande
-│   ├── context.py          #   CommandContext + adaptateurs de réponse (! et /)
 │   ├── helpers.py          #   Petits utilitaires Discord (recherche de salon)
-│   ├── detectors/          # DÉTECTEURS — un par style d'invocation
-│   │   ├── base.py         #   BaseDetector + DetectionResult
-│   │   ├── prefix.py       #   Détecteur ! : ignore-self → DM/serveur → parsing
-│   │   └── slash.py        #   Détecteur / : arbre slash généré depuis le catalogue
-│   ├── commands/           # LOGIQUE PARTAGÉE — une seule implémentation par commande
-│   │   ├── logic.py        #   Les commandes simples (inc, random, aup, chat, ...)
-│   │   └── duels.py        #   Les duels (gamble, crit)
-│   ├── models/             # MODÈLES — accès données et règles pures
+│   ├── models/             # M — MODÈLES : accès données et règles pures
 │   │   ├── db.py           #   Connexion MongoDB (Motor) et collections
 │   │   ├── stats.py        #   Stats, winrate, leaderboard, enregistrement
 │   │   ├── duels.py        #   Règles de duel gamble/crit (pures, testables)
 │   │   └── llm.py          #   Client HTTP du LLM local Ollama
-│   └── views/              # VUES — rendu et widgets interactifs
-│       ├── formatting.py   #   Renderers (messages et embeds) — pur
-│       └── widgets.py      #   Views Discord (boutons, pagination)
+│   ├── views/              # V — VUES : rendu et widgets interactifs
+│   │   ├── formatting.py   #   Renderers (messages et embeds) — pur
+│   │   ├── widgets.py      #   Views Discord (boutons, pagination)
+│   │   └── responders.py   #   Adaptateurs de sortie (message / interaction)
+│   └── controllers/        # C — CONTRÔLEURS : pipeline de requête
+│       ├── base.py         #   BaseController : pipeline partagé (détecter→résoudre→valider)
+│       ├── context.py      #   CommandContext + ChallengeRequest
+│       ├── prefix.py       #   Contrôleur `!` : ignore-self → routage → parsing
+│       ├── slash.py        #   Contrôleur `/` : arbre slash généré depuis le catalogue
+│       └── commands/       #   Les handlers partagés (une implémentation par commande)
+│           ├── logic.py    #     Les commandes simples (inc, random, aup, chat, ...)
+│           └── duels.py    #     Les duels (gamble, crit)
 ├── tests/                  # Tests pytest (par couche)
 ├── pyproject.toml          # Métadonnées, packaging et config pytest
 ├── requirements.txt        # Dépendances de production
@@ -94,23 +96,24 @@ Tetrabot/
 └── .env.example            # Modèle de configuration sécurisé
 ```
 
-> **Architecture en couches + catalogue de commandes** :
+> **Architecture MVC + catalogue de commandes** :
 > chaque commande est implémentée **qu'une seule fois** dans
-> `tetrabot/commands/` et sert aussi bien au préfixe `!` qu'aux
+> `tetrabot/controllers/commands/` et sert aussi bien au préfixe `!` qu'aux
 > slash-commands `/`. Les deux transports ne font que *reconnaître* leur
-> style d'invocation et normaliser un `CommandContext` : `detectors/prefix`
+> style d'invocation et normaliser un `CommandContext` : `controllers/prefix`
 > (ignore-self → routage DM/serveur → parsing du préfixe `!`) et
-> `detectors/slash` (enregistrement de l'arbre `/`). Le `catalog.py` décrit
+> `controllers/slash` (enregistrement de l'arbre `/`). Le `catalog.py` décrit
 > chaque commande une seule fois, et le routeur `!`, l'arbre `/` et l'embed
-> d'aide sont tous générés à partir de lui. Les modèles ne dépendent jamais
-> de Discord, les vues n'accèdent jamais à la base de données, et la logique
-> partagée orchestre les deux puis rend via `ctx.respond(...)`.
+> d'aide sont tous générés à partir de lui. Le **Modèle** ne dépend jamais
+> de Discord, la **Vue** n'accède jamais à la base de données ni au
+> Contrôleur, et les handlers partagés orchestrent les deux puis rendent via
+> `ctx.respond(...)`.
 
 ### Ajouter une commande
 
-1. Écrivez `async def cmd_foo(ctx)` dans `tetrabot/commands/logic.py`.
+1. Écrivez `async def cmd_foo(ctx)` dans `tetrabot/controllers/commands/logic.py`.
 2. Ajoutez une entrée `CommandSpec` dans `tetrabot/catalog.py`.
-3. Ajoutez la fonction à `LOGIC` dans `tetrabot/commands/__init__.py`.
+3. Ajoutez la fonction à `HANDLERS` dans `tetrabot/controllers/commands/__init__.py`.
 
 Les deux transports, l'aide et les tests de cohérence sont mis à jour
 automatiquement.

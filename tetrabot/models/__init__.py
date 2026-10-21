@@ -1,6 +1,6 @@
 """MODEL layer: data access and domain rules.
 
-Models never import Discord UI, views, or command logic.
+Models never import Discord UI, views, or command handlers.
 """
 from tetrabot.models import db, duels, llm, stats
 from tetrabot.models.llm import ask

@@ -14,8 +14,8 @@ import asyncio
 
 import pytest
 
-from tetrabot.commands import duels as duels_cmd
-from tetrabot.commands import logic
+from tetrabot.controllers.commands import duels as duels_cmd
+from tetrabot.controllers.commands import logic
 from tetrabot.models import duels
 from tetrabot.models import stats as stats_mod
 

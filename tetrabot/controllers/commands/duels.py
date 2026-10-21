@@ -1,4 +1,4 @@
-"""The duel commands — ``!gamble`` and ``!crit`` (and their ``/`` twins).
+"""The duel handlers — ``!gamble`` and ``!crit`` (and their ``/`` twins).
 
 Both duels follow the same three steps:
 
@@ -8,7 +8,7 @@ Both duels follow the same three steps:
 3. persist the result for **both** players.
 
 Step 1 is the only transport-specific part, and it is hidden behind
-:meth:`tetrabot.context.CommandContext.ask_for_opponent`.
+:meth:`tetrabot.controllers.context.CommandContext.ask_for_opponent`.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from asyncio import sleep
 
 import discord
 
-from tetrabot.context import ChallengeRequest, CommandContext
+from tetrabot.controllers.context import ChallengeRequest, CommandContext
 from tetrabot.models import duels
 from tetrabot.models.stats import record_result
 from tetrabot.views import formatting as fmt

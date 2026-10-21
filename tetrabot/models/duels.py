@@ -1,7 +1,8 @@
 """Pure duel rules — no I/O, no Discord, fully unit-testable.
 
 These functions decide who wins a gamble or crit duel and by how much; the
-*storytelling* (messages, pacing) belongs to the command logic and the views.
+*storytelling* (messages, pacing) belongs to the command handlers and the
+views.
 """
 from __future__ import annotations
 

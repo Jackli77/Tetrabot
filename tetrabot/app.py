@@ -1,13 +1,13 @@
-"""The bot factory: intents, client, detectors, slash tree and event handlers.
+"""The bot factory: intents, client, controllers, slash tree and event handlers.
 
 :func:`create_bot` builds a ready-to-run :class:`discord.ext.commands.Bot`:
 
 * privileged ``message_content`` intent (enable it in the Developer Portal),
-* the two detectors wired up:
+* the two controllers wired up:
 
-  - :class:`tetrabot.detectors.prefix.PrefixDetector` handles ``!`` messages
-    (``on_message`` / ``on_message_edit`` → ``handle_message``),
-  - :class:`tetrabot.detectors.slash.SlashDetector` registers the ``/`` tree,
+  - :class:`tetrabot.controllers.prefix.PrefixController` handles ``!``
+    messages (``on_message`` / ``on_message_edit`` → ``handle_message``),
+  - :class:`tetrabot.controllers.slash.SlashController` registers the ``/`` tree,
 * Discord lifecycle events:
 
   - ``on_ready`` → sync slash commands, announce readiness, init the DB,
@@ -15,9 +15,9 @@
   - ``on_message_delete`` → log deleted content,
   - ``on_voice_state_update`` → announce voice joins/leaves.
 
-Detectors only normalise transports into a shared
-:class:`tetrabot.context.CommandContext`; the actual behaviour lives once in
-:mod:`tetrabot.commands`.
+Controllers only normalise transports into a shared
+:class:`tetrabot.controllers.context.CommandContext`; the actual behaviour
+lives once in :mod:`tetrabot.controllers.commands`.
 """
 from __future__ import annotations
 
@@ -27,22 +27,22 @@ import discord
 from discord.ext import commands
 
 from tetrabot import config
-from tetrabot.detectors.prefix import PrefixDetector, handle_message
-from tetrabot.detectors.slash import SlashDetector
+from tetrabot.controllers.prefix import PrefixController, handle_message
+from tetrabot.controllers.slash import SlashController
 from tetrabot.helpers import find_channel
 from tetrabot.models import db
 
 logger = logging.getLogger(__name__)
 
 
-async def run_prefix_message(message, bot_client, detector: PrefixDetector | None = None):
-    """Run an incoming message through the ``!`` detector, then dispatch.
+async def run_prefix_message(message, bot_client, controller: PrefixController | None = None):
+    """Run an incoming message through the ``!`` controller, then dispatch.
 
-    Thin wrapper around :func:`tetrabot.detectors.prefix.handle_message`
+    Thin wrapper around :func:`tetrabot.controllers.prefix.handle_message`
     kept here so events stay one-liners and tests can import a stable entry
     point from ``tetrabot.app``.
     """
-    return await handle_message(message, bot_client, detector=detector)
+    return await handle_message(message, bot_client, controller=controller)
 
 
 def create_bot() -> commands.Bot:
@@ -52,12 +52,12 @@ def create_bot() -> commands.Bot:
 
     bot_client = commands.Bot(command_prefix=config.COMMAND_PREFIX, intents=intents)
 
-    # Detectors: one per invocation style, both feeding the same logic.
-    prefix_detector = PrefixDetector()
-    slash_detector = SlashDetector()
+    # Controllers: one per invocation style, both feeding the same handlers.
+    prefix_controller = PrefixController()
+    slash_controller = SlashController()
 
-    # Register the slash commands into the bot tree via the / detector.
-    slash_detector.setup(bot_client, bot_client.tree)
+    # Register the slash commands into the bot tree via the / controller.
+    slash_controller.setup(bot_client, bot_client.tree)
 
     # Track if on_ready has already executed to prevent double execution on reconnects
     has_started = False
@@ -96,11 +96,11 @@ def create_bot() -> commands.Bot:
 
     @bot_client.event
     async def on_message(message):
-        await run_prefix_message(message, bot_client, detector=prefix_detector)
+        await run_prefix_message(message, bot_client, controller=prefix_controller)
 
     @bot_client.event
     async def on_message_edit(before, after):
-        await run_prefix_message(after, bot_client, detector=prefix_detector)
+        await run_prefix_message(after, bot_client, controller=prefix_controller)
 
     @bot_client.event
     async def on_message_delete(message):

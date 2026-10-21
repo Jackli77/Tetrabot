@@ -1,8 +1,9 @@
 """Pure rendering helpers.
 
-These functions format exactly what the command logic hands them — they never
-touch the database and never perform Discord I/O.  The interactive widgets
-live in :mod:`tetrabot.views.widgets`.
+These functions format exactly what the command handlers hand them — they
+never touch the database and never perform Discord I/O.  The interactive
+widgets live in :mod:`tetrabot.views.widgets`, and the output adapters live
+in :mod:`tetrabot.views.responders`.
 """
 from __future__ import annotations
 
@@ -121,6 +122,33 @@ def render_crit_outcome(rounds: int, ties: int, winner_name: str, loser_name: st
         f"Le duel s'est terminé après **{rounds}** manches et **{ties}** égalités\n"
         f"Le gagnant est **{winner_name}**, **{loser_name}** doit donner **{stake}** "
         f"à **{winner_name}** {MONEY_WINGS}"
+    )
+
+
+###############################################################################
+# Shared controller replies (used by both transports)
+###############################################################################
+
+
+def render_missing_arguments(mention: str, required: int) -> str:
+    """The reply sent when a command is called without enough arguments.
+
+    ``required`` is the number of arguments the command expects, so the
+    message states how many are needed in total.
+    """
+    return f"{mention} Cette fonction à besoin de minimum {required} arguments"
+
+
+def render_challenge_embed(title: str, description: str) -> discord.Embed:
+    """The embed announcing a duel challenge.
+
+    Shared by both transports: the ``!`` transport adds a ``✅`` reaction to
+    it, the ``/`` transport attaches an accept button.
+    """
+    return discord.Embed(
+        title=title,
+        description=description,
+        colour=discord.Colour.gold(),
     )
 
 

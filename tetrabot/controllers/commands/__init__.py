@@ -1,23 +1,23 @@
-"""COMMAND layer: transport-agnostic command implementations.
+"""COMMAND handlers: the shared behaviour behind every command.
 
-Each ``cmd_*`` function follows the same shape:
+Each handler follows the same shape:
 
     parse ctx.args  ->  call models  ->  render with views  ->  await ctx.respond(...)
 
-Two detectors feed this shared logic — :mod:`tetrabot.detectors.prefix` (``!``)
-and :mod:`tetrabot.detectors.slash` (``/``) — so one implementation serves
-both.  This package stays detector-free: it only exposes the context, the
-``cmd_*`` implementations, and the ``LOGIC`` registry.
+Two controllers feed this shared behaviour — :mod:`tetrabot.controllers.prefix`
+(``!``) and :mod:`tetrabot.controllers.slash` (``/``) — so one implementation
+serves both.  This package stays controller-free: it only exposes the
+context, the ``cmd_*`` implementations, and the ``HANDLERS`` registry.
 
 To add a new command:
-    1. Write ``async def cmd_foo(ctx)`` in :mod:`tetrabot.commands.logic`
-       (or :mod:`tetrabot.commands.duels`).
+    1. Write ``async def cmd_foo(ctx)`` in :mod:`tetrabot.controllers.commands.logic`
+       (or :mod:`tetrabot.controllers.commands.duels`).
     2. Add a :class:`tetrabot.catalog.CommandSpec` describing it.
     3. Done — both transports pick it up automatically.
 """
-from tetrabot.commands import duels, logic
-from tetrabot.commands.duels import cmd_crit, cmd_gamble
-from tetrabot.commands.logic import (
+from tetrabot.controllers.commands import duels, logic
+from tetrabot.controllers.commands.duels import cmd_crit, cmd_gamble
+from tetrabot.controllers.commands.logic import (
     cmd_aup,
     cmd_chat,
     cmd_clean,
@@ -27,9 +27,9 @@ from tetrabot.commands.logic import (
     cmd_random,
 )
 
-#: Every shared command implementation, keyed by name.  The detectors look
+#: Every shared command implementation, keyed by name.  The controllers look
 #: their commands up here, so the catalog never has to know about functions.
-LOGIC = {
+HANDLERS = {
     "cmd_aup": cmd_aup,
     "cmd_chat": cmd_chat,
     "cmd_clean": cmd_clean,
@@ -42,7 +42,7 @@ LOGIC = {
 }
 
 __all__ = [
-    "LOGIC",
+    "HANDLERS",
     "cmd_aup",
     "cmd_chat",
     "cmd_clean",

@@ -1,13 +1,13 @@
-"""DETECTOR/``/``: recognise native slash invocations on the command tree.
+"""CONTROLLER/``/``: the slash transport.
 
-:class:`SlashDetector` registers every Discord slash (app) command on the
+:class:`SlashController` registers every Discord slash (app) command on the
 bot's command tree.  The commands themselves are **generated from the
 catalog** (:mod:`tetrabot.catalog`), so the ``/`` tree and the ``!`` router
 can never drift apart.
 
-Each generated command builds a shared :class:`tetrabot.context.CommandContext`
-and dispatches to the same shared logic the ``!`` detector uses.  Interactive
-UI widgets (challenge buttons, leaderboard pagination) live in
+Each generated command builds a shared :class:`tetrabot.controllers.context.CommandContext`
+and dispatches to the same shared handler the ``!`` controller uses.
+Interactive UI widgets (challenge buttons, leaderboard pagination) live in
 :mod:`tetrabot.views.widgets`.
 """
 from __future__ import annotations
@@ -20,8 +20,10 @@ import discord
 from discord import app_commands
 
 from tetrabot import catalog
-from tetrabot.context import ChallengeRequest, CommandContext, SlashResponder
-from tetrabot.detectors.base import BaseDetector, DetectionResult
+from tetrabot.controllers.base import BaseController, DetectionResult
+from tetrabot.controllers.context import ChallengeRequest, CommandContext
+from tetrabot.views.formatting import render_challenge_embed
+from tetrabot.views.responders import SlashResponder
 from tetrabot.views.widgets import ChallengeView, LeaderboardPaginationView
 
 logger = logging.getLogger(__name__)
@@ -47,6 +49,58 @@ def _option_annotation(param: catalog.Param) -> Any:
     return str
 
 
+class SlashController(BaseController):
+    """Register the ``/`` command tree.
+
+    Detection for slash commands happens inside Discord itself (the user
+    picks a registered command); this class only wires the tree so every
+    invocation normalises into a :class:`CommandContext` and reaches the
+    shared handler.
+    """
+
+    name = "/"
+
+    def __init__(self, bot: discord.Client | None = None):
+        self.bot = bot
+
+    async def detect(self, interaction: discord.Interaction, bot_client=None):
+        """Slash invocations always dispatch via the tree — nothing to parse."""
+        return DetectionResult(handled=True, extra={"slash": True})
+
+    def setup(self, bot: discord.Client, tree: app_commands.CommandTree):
+        """Register every slash command on ``tree``."""
+        self.bot = bot
+        setup_slash_commands(bot, tree)
+        return tree
+
+    # -- transport specific steps --------------------------------------
+
+    def build_context(
+        self, spec: catalog.CommandSpec, result: DetectionResult, interaction, bot_client
+    ) -> CommandContext:
+        """Build the shared context for a slash invocation."""
+        ctx = build_context(interaction, spec)
+        if spec.needs_challenge:
+            ctx.challenge = _make_challenge_handler(interaction)
+        ctx.paginate = _make_pagination_handler(interaction, ctx.respond)
+        return ctx
+
+
+def build_context(
+    interaction: discord.Interaction,
+    spec: catalog.CommandSpec | None = None,
+) -> CommandContext:
+    """Build the shared :class:`CommandContext` for a slash command."""
+    return CommandContext(
+        author=interaction.user,
+        channel=interaction.channel,
+        client=interaction.client,
+        args=[],
+        respond=SlashResponder(interaction),
+        prefix="/",
+        ephemeral=spec.ephemeral if spec is not None else False,
+    )
+
 def _build_callback(spec: catalog.CommandSpec):
     """Build the Discord callback for a catalog entry.
 
@@ -56,18 +110,14 @@ def _build_callback(spec: catalog.CommandSpec):
     params = spec.slash_params or spec.params
 
     async def callback(interaction: discord.Interaction, **kwargs):
-        from tetrabot.commands import LOGIC
-
-        ctx = build_context(interaction, spec)
+        controller = SlashController()
+        result = await controller.detect(interaction)
+        ctx = controller.build_context(spec, result, interaction, interaction.client)
         # Only the options the user actually filled in are forwarded.
         ctx.args = [str(value) for value in kwargs.values() if value is not None]
         ctx.extra.update({k: v for k, v in kwargs.items() if v is not None})
 
-        if spec.name in CHALLENGE_COMMANDS:
-            ctx.challenge = _make_challenge_handler(interaction)
-        ctx.paginate = _make_pagination_handler(interaction, ctx.respond)
-
-        await LOGIC[spec.logic](ctx)
+        await controller.execute(spec, ctx)
 
     # Give the callback the signature Discord expects.
     parameters = [
@@ -94,62 +144,18 @@ def _build_callback(spec: catalog.CommandSpec):
     return callback
 
 
-def build_context(
-    interaction: discord.Interaction,
-    spec: catalog.CommandSpec | None = None,
-) -> CommandContext:
-    """Build the shared :class:`CommandContext` for a slash command."""
-    return CommandContext(
-        author=interaction.user,
-        channel=interaction.channel,
-        client=interaction.client,
-        args=[],
-        respond=SlashResponder(interaction),
-        prefix="/",
-        ephemeral=spec.ephemeral if spec is not None else False,
-    )
-
-
-class SlashDetector(BaseDetector):
-    """Register the ``/`` command tree.
-
-    Detection for slash commands happens inside Discord itself (the user
-    picks a registered command); this class only wires the tree so every
-    invocation normalises into a :class:`CommandContext` and reaches the
-    shared logic.
-    """
-
-    name = "/"
-
-    def __init__(self, bot: discord.Client | None = None):
-        self.bot = bot
-
-    async def detect(self, interaction: discord.Interaction, bot_client=None):
-        """Slash invocations always dispatch via the tree — nothing to parse."""
-        return DetectionResult(handled=True, extra={"slash": True})
-
-    def setup(self, bot: discord.Client, tree: app_commands.CommandTree):
-        """Register every slash command on ``tree``."""
-        self.bot = bot
-        setup_slash_commands(bot, tree)
-        return tree
-
-
 def _make_challenge_handler(interaction: discord.Interaction) -> Any:
-    """Build the button-based challenge used by the duel commands.
+    """Build the button-based challenge used by the duel handlers.
 
     The slash transport offers a button; the prefix transport offers a
-    reaction.  Both end up calling the same shared logic.
+    reaction.  Both end up calling the same shared handler.
     """
 
     async def challenge(request: ChallengeRequest) -> discord.User | None:
         view = ChallengeView(challenger=interaction.user, timeout=CHALLENGE_TIMEOUT)
-        embed = discord.Embed(
-            title=request.title,
-            description=request.description,
-            colour=discord.Colour.gold(),
+        await interaction.response.send_message(
+            embed=render_challenge_embed(request.title, request.description), view=view
         )
-        await interaction.response.send_message(embed=embed, view=view)
 
         await view.wait()
         if view.accepted_by is None:
@@ -181,16 +187,12 @@ def _make_pagination_handler(
     return paginate
 
 
-#: Commands that need a duel challenge instead of a plain dispatch.
-CHALLENGE_COMMANDS = {"gamble", "crit"}
-
-
 def setup_slash_commands(bot: discord.Client, tree: app_commands.CommandTree) -> None:
     """Register every slash command described by the catalog.
 
     Each command is generated from its :class:`tetrabot.catalog.CommandSpec`:
     the options come from the catalog, and the callback dispatches to the
-    same shared logic the ``!`` detector uses.
+    same shared handler the ``!`` controller uses.
     """
     for spec in catalog.slash_commands():
         for name in spec.slash_name_list:
@@ -214,9 +216,8 @@ def _register_slash_command(
 
 
 __all__ = [
-    "CHALLENGE_COMMANDS",
     "CHALLENGE_TIMEOUT",
-    "SlashDetector",
+    "SlashController",
     "build_context",
     "setup_slash_commands",
 ]

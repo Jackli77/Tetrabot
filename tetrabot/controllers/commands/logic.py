@@ -1,13 +1,13 @@
-"""Shared command logic — one implementation per command, used by ``!`` and ``/``.
+"""Shared command handlers — one implementation per command, used by ``!`` and ``/``.
 
 Every function follows the same shape:
 
     parse ctx.args  ->  call models  ->  render with views  ->  await ctx.respond(...)
 
-Both detectors build a :class:`tetrabot.context.CommandContext` and dispatch
-here, so the exact same code runs for both invocation styles.  Nothing in this
-package imports a detector module or touches ``message``/``interaction``
-directly.
+Both controllers build a :class:`tetrabot.controllers.context.CommandContext`
+and dispatch here, so the exact same code runs for both invocation styles.
+Nothing in this package imports a controller module or touches
+``message``/``interaction`` directly.
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import random
 from asyncio import sleep
 
 from tetrabot import config
-from tetrabot.context import CommandContext
+from tetrabot.controllers.context import CommandContext
 from tetrabot.models import llm
 from tetrabot.models.stats import leaderboard, record_result
 from tetrabot.views import formatting as fmt

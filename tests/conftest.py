@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from tetrabot.context import CommandContext
+from tetrabot.controllers.context import CommandContext
 
 
 class FakeAvatar:

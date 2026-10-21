@@ -13,18 +13,18 @@ import pytest
 from discord import app_commands
 
 from tetrabot import catalog
-from tetrabot.commands import LOGIC
-from tetrabot.detectors.slash import setup_slash_commands
+from tetrabot.controllers.commands import HANDLERS
+from tetrabot.controllers.slash import setup_slash_commands
 
 
 class TestCatalogIntegrity:
     def test_every_command_points_at_a_real_implementation(self):
         for spec in catalog.COMMANDS:
-            assert spec.logic in LOGIC, f"{spec.name} -> {spec.logic} is missing"
+            assert spec.handler in HANDLERS, f"{spec.name} -> {spec.handler} is missing"
 
     def test_every_implementation_is_reachable(self):
-        used = {spec.logic for spec in catalog.COMMANDS}
-        assert used == set(LOGIC), f"unreachable: {set(LOGIC) - used}"
+        used = {spec.handler for spec in catalog.COMMANDS}
+        assert used == set(HANDLERS), f"unreachable: {set(HANDLERS) - used}"
 
     def test_command_names_are_unique(self):
         names = [spec.name for spec in catalog.COMMANDS]
@@ -51,6 +51,18 @@ class TestCatalogIntegrity:
         for spec in catalog.COMMANDS:
             flags = [p.required for p in spec.params]
             assert flags == sorted(flags, reverse=True), spec.name
+
+    def test_only_the_duels_need_a_challenge(self):
+        """The challenge flag is what tells the controller to host a duel."""
+        needing = {spec.name for spec in catalog.COMMANDS if spec.needs_challenge}
+        assert needing == {"gamble", "crit"}
+
+    def test_every_command_with_a_challenge_is_a_duel(self):
+        """A command that needs a challenge must be a guild-only command."""
+        for spec in catalog.COMMANDS:
+            if spec.needs_challenge:
+                assert spec.scope.allows_guild, spec.name
+                assert not spec.scope.allows_dm, spec.name
 
 
 class TestLookup:
