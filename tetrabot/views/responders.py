@@ -29,6 +29,17 @@ class Responder:
     async def defer(self) -> None:
         """Acknowledge the invocation early (no-op where unsupported)."""
 
+    async def edit(
+        self,
+        content: str | None = None,
+        embed: discord.Embed | None = None,
+    ) -> None:
+        """Replace what was already sent.
+
+        Used by the streaming chat, which rewrites its message as the answer
+        grows.  Transports that cannot edit simply do nothing.
+        """
+
 
 class PrefixResponder(Responder):
     """Replies to a ``!`` command by posting in the channel it came from."""
@@ -46,6 +57,14 @@ class PrefixResponder(Responder):
         # ``ephemeral`` is meaningless for a plain message: the flag only
         # exists so command logic can stay transport-agnostic.
         return await self.message.channel.send(content=content, embed=embed, view=view)
+
+    async def edit(
+        self,
+        content: str | None = None,
+        embed: discord.Embed | None = None,
+    ) -> None:
+        """Edit the message this responder posted."""
+        await self.message.edit(content=content, embed=embed)
 
 
 class SlashResponder(Responder):
@@ -87,6 +106,23 @@ class SlashResponder(Responder):
         if not self._used:
             self._used = True
             await self.interaction.response.defer()
+
+    async def edit(
+        self,
+        content: str | None = None,
+        embed: discord.Embed | None = None,
+    ) -> None:
+        """Edit the original response.
+
+        Before the first answer this edits the pending response; afterwards
+        it edits the message Discord already published.
+        """
+        kwargs = {"content": content, "embed": embed}
+        if not self._used:
+            self._used = True
+            await self.interaction.response.edit_message(**kwargs)
+            return
+        await self.interaction.edit_original_response(**kwargs)
 
 
 __all__ = ["PrefixResponder", "Responder", "SlashResponder"]

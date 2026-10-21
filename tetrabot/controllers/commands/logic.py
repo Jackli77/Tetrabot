@@ -15,9 +15,7 @@ import logging
 import random
 from asyncio import sleep
 
-from tetrabot import config
 from tetrabot.controllers.context import CommandContext
-from tetrabot.models import llm
 from tetrabot.models.stats import leaderboard, record_result
 from tetrabot.views import formatting as fmt
 
@@ -80,57 +78,6 @@ async def cmd_aup(ctx: CommandContext) -> None:
     await ctx.respond(content=fmt.render_aup_call(toutou))
 
 
-# Frames the model: chatbot role, conversational tone, answer the last
-# message (in the language of the conversation) instead of analysing it.
-CHAT_SYSTEM_PROMPT = (
-    "You are a friendly Discord chatbot. The channel history is provided as "
-    "context. Reply to the most recent message, in the same language as the "
-    "conversation, in a short conversational tone. Do not analyse the "
-    "conversation, do not use markdown tables."
-)
-
-
-async def cmd_chat(ctx: CommandContext) -> None:
-    """Chat with the local Ollama LLM: send the user's message, answer in-channel.
-
-    Uses the recent channel history as conversation context so the model can
-    follow the ongoing discussion.
-    """
-    if not ctx.args:
-        await ctx.respond(content="Ecris quelque chose à envoyer au chatbot.")
-        return
-
-    prompt = " ".join(ctx.args)
-
-    # Recent channel messages (author-prefixed) become the conversation context.
-    context = [
-        f"{m.author.name}: {m.content}"
-        async for m in ctx.channel.history(limit=config.CHAT_CONTEXT_MESSAGES)
-    ]
-
-    # Acknowledge immediately — a local 4B model can take a while to answer.
-    await ctx.respond(
-        content=f"🤖 En train de générer une réponse avec **{config.OLLAMA_MODEL}**..."
-    )
-
-    try:
-        answer = await llm.ask(prompt, context, system=CHAT_SYSTEM_PROMPT)
-    except Exception:
-        logger.exception("Ollama chat failed")
-        await ctx.respond(
-            content=(
-                "😞 Ollama n'a pas répondu — vérifie que le serveur est "
-                f"démarré sur `{config.OLLAMA_HOST}`."
-            )
-        )
-        return
-
-    if len(answer) > DISCORD_CHAR_LIMIT:
-        answer = answer[: DISCORD_CHAR_LIMIT - 1] + "…"
-
-    await ctx.respond(content=fmt.render_chat(answer))
-
-
 async def cmd_clean(ctx: CommandContext) -> None:
     """Delete a specified number of messages from the current channel."""
     try:
@@ -183,10 +130,8 @@ async def cmd_help(ctx: CommandContext) -> None:
 
 
 __all__ = [
-    "CHAT_SYSTEM_PROMPT",
     "DISCORD_CHAR_LIMIT",
     "cmd_aup",
-    "cmd_chat",
     "cmd_clean",
     "cmd_help",
     "cmd_inc",

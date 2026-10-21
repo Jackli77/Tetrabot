@@ -15,11 +15,11 @@ To add a new command:
     2. Add a :class:`tetrabot.catalog.CommandSpec` describing it.
     3. Done — both transports pick it up automatically.
 """
-from tetrabot.controllers.commands import duels, logic
+from tetrabot.controllers.commands import chat, duels, logic
+from tetrabot.controllers.commands.chat import cmd_chat, cmd_forget
 from tetrabot.controllers.commands.duels import cmd_crit, cmd_gamble
 from tetrabot.controllers.commands.logic import (
     cmd_aup,
-    cmd_chat,
     cmd_clean,
     cmd_help,
     cmd_inc,
@@ -34,6 +34,7 @@ HANDLERS = {
     "cmd_chat": cmd_chat,
     "cmd_clean": cmd_clean,
     "cmd_crit": cmd_crit,
+    "cmd_forget": cmd_forget,
     "cmd_gamble": cmd_gamble,
     "cmd_help": cmd_help,
     "cmd_inc": cmd_inc,
@@ -43,10 +44,12 @@ HANDLERS = {
 
 __all__ = [
     "HANDLERS",
+    "chat",
     "cmd_aup",
     "cmd_chat",
     "cmd_clean",
     "cmd_crit",
+    "cmd_forget",
     "cmd_gamble",
     "cmd_help",
     "cmd_inc",

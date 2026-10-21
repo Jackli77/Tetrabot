@@ -9,7 +9,9 @@ what lets a single implementation serve both ``!`` and ``/``.
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
+from typing import Any
 
 import discord
 
@@ -53,6 +55,7 @@ class CommandContext:
     extra: dict = field(default_factory=dict)
     challenge: Callable[[ChallengeRequest], Awaitable[discord.User | None]] | None = None
     paginate: Callable[[list[discord.Embed]], Awaitable[None]] | None = None
+    typing: Callable[[], Any] | None = None
 
     @property
     def user_id(self) -> int:
@@ -100,6 +103,24 @@ class CommandContext:
                 await self.respond(embed=page)
             return
         await self.paginate(pages)
+
+    @asynccontextmanager
+    async def typing_indicator(self):
+        """Show the "bot is typing" indicator while the command runs.
+
+        A long silence is what makes a bot feel dead; the indicator tells
+        the user that something is happening.  Transports that cannot show
+        it simply do nothing.
+        """
+        if self.typing is None:
+            yield None
+            return
+        try:
+            async with self.typing() as indicator:
+                yield indicator
+        except Exception:
+            # A missing permission must never break the command.
+            yield None
 
 
 __all__ = ["ChallengeRequest", "CommandContext"]

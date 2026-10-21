@@ -16,7 +16,20 @@ Un bot Discord modulaire en Python intégrant des **Slash Commands Discord (`/`)
   - `/crit <somme> [odds]` : Duel de coups critiques (chafer) avec relance automatique en cas d'égalité.
   - `/incscore` (ou `/leaderboard`) : Tableau des scores et classement par équité avec pagination par boutons.
   - `/random [min] [max]` : Tirage de nombres aléatoires.
-  - `/chat <message>` : Envoie le message au chatbot local **Ollama** (`qwen3:4b`) et affiche sa réponse dans le salon.
+- **Chatbot (`/chat <message>`) :** Un vrai chatbot, pas une simple requête :
+  - **Réponse en streaming** : le texte s'écrit dans le salon au fur et à mesure, plus un indicateur « le bot écrit » — plus de silence de 20 secondes.
+  - **Outils de recherche** : le bot *cherche* les informations qu'il ne peut pas connaître, via le **function calling** d'Ollama :
+    - `get_weather` — la météo actuelle et les jours à venir (Open-Meteo, sans clé API) ;
+    - `search_wikipedia` — le résumé de l'article Wikipédia (fr/en/de/es/it) ;
+    - `search_web` — une réponse courte et sourcée (DuckDuckGo) ;
+    - `get_datetime` — la date et l'heure actuelles, avec le bon fuseau.
+  - **Boucle d'outils** : le modèle demande un outil, le bot l'exécute et lui renvoie le résultat, puis le modèle rédige la vraie réponse. Le nombre de tours est borné, et un outil qui échoue est expliqué à l'utilisateur au lieu de casser la réponse.
+  - **Mémoire de conversation** : le bot se souvient des échanges du salon (TTL de 6 h), donc « et lui ? » fonctionne enfin.
+  - **Contexte intelligent** : les messages vides, les commandes, les doublons et le bruit du salon sont écartés avant d'envoyer quoi que ce soit au modèle.
+  - **Budget de tokens adapté** : les modèles « raisonnants » consomment leur budget en réflexion et renvoient parfois une réponse *vide* — le bot relance alors avec un budget plus large au lieu d'abandonner.
+  - **Erreurs explicites** : serveur injoignable, modèle absent, délai dépassé et réponse vide ont chacun leur message actionnable.
+  - **Rendu soigné** : les réponses longues deviennent un embed, et les blocs de code sont extraits et affichés avec leur langage.
+  - `/forget` : oublie la conversation en cours.
 - **Utilitaires serveur :**
   - `/clean <nombre>` : Purge rapide et silencieuse de messages avec confirmation éphémère.
   - `/commands` : Menu d'aide interactif complet sous forme d'Embed.
@@ -76,9 +89,16 @@ Tetrabot/
 │   │   ├── db.py           #   Connexion MongoDB (Motor) et collections
 │   │   ├── stats.py        #   Stats, winrate, leaderboard, enregistrement
 │   │   ├── duels.py        #   Règles de duel gamble/crit (pures, testables)
-│   │   └── llm.py          #   Client HTTP du LLM local Ollama
+│   │   ├── llm.py          #   Client HTTP du LLM local Ollama (+ streaming, outils)
+│   │   ├── memory.py       #   Mémoire de conversation (par salon, avec TTL)
+│   │   ├── context.py      #   Sélection du contexte envoyé au modèle
+│   │   └── tools/          #   Les outils de recherche du chatbot
+│   │       ├── base.py     #     Le contrat d'un outil (nom, schéma, appel)
+│   │       ├── lookup.py   #     Météo, Wikipédia, web, date et heure
+│   │       └── registry.py #     Les outils activés et leurs schémas
 │   ├── views/              # V — VUES : rendu et widgets interactifs
 │   │   ├── formatting.py   #   Renderers (messages et embeds) — pur
+│   │   ├── chat.py         #   Rendu du chatbot (embeds, code, erreurs)
 │   │   ├── widgets.py      #   Views Discord (boutons, pagination)
 │   │   └── responders.py   #   Adaptateurs de sortie (message / interaction)
 │   └── controllers/        # C — CONTRÔLEURS : pipeline de requête
@@ -87,7 +107,8 @@ Tetrabot/
 │       ├── prefix.py       #   Contrôleur `!` : ignore-self → routage → parsing
 │       ├── slash.py        #   Contrôleur `/` : arbre slash généré depuis le catalogue
 │       └── commands/       #   Les handlers partagés (une implémentation par commande)
-│           ├── logic.py    #     Les commandes simples (inc, random, aup, chat, ...)
+│           ├── logic.py    #     Les commandes simples (inc, random, aup, ...)
+│           ├── chat.py     #     Le chatbot (streaming, mémoire, relance)
 │           └── duels.py    #     Les duels (gamble, crit)
 ├── tests/                  # Tests pytest (par couche)
 ├── pyproject.toml          # Métadonnées, packaging et config pytest
@@ -108,6 +129,29 @@ Tetrabot/
 > de Discord, la **Vue** n'accède jamais à la base de données ni au
 > Contrôleur, et les handlers partagés orchestrent les deux puis rendent via
 > `ctx.respond(...)`.
+
+### Les outils du chatbot
+
+Le chatbot n'invente pas les faits : il les **cherche**. Ollama gère le
+*function calling* nativement, le bot décrit ses outils au modèle et exécute
+ceux qu'il demande.
+
+| Outil | Ce qu'il fait | Source |
+|---|---|---|
+| `get_weather` | Météo actuelle + prévision sur 3 jours | Open-Meteo (sans clé) |
+| `search_wikipedia` | Résumé de l'article + autres résultats | Wikipédia (5 langues) |
+| `search_web` | Réponse courte et sourcée | DuckDuckGo |
+| `get_datetime` | Date et heure, avec le fuseau demandé | Horloge système |
+
+La boucle est bornée (`CHAT_MAX_TOOL_ROUNDS`) et chaque outil **ne lève
+jamais** : un échec est renvoyé au modèle comme une donnée, pour qu'il
+puisse l'expliquer à l'utilisateur.
+
+Pour activer ou désactiver un outil :
+
+```env
+CHAT_TOOLS="get_weather,search_wikipedia"
+```
 
 ### Ajouter une commande
 

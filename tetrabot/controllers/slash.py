@@ -83,7 +83,17 @@ class SlashController(BaseController):
         if spec.needs_challenge:
             ctx.challenge = _make_challenge_handler(interaction)
         ctx.paginate = _make_pagination_handler(interaction, ctx.respond)
+        ctx.typing = _make_typing_handler(interaction)
         return ctx
+
+
+def _make_typing_handler(interaction: discord.Interaction) -> Any:
+    """Build the "bot is typing" indicator for the ``/`` transport."""
+
+    def typing():
+        return interaction.channel.typing()
+
+    return typing
 
 
 def build_context(

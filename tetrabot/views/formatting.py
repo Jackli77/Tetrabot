@@ -62,10 +62,7 @@ def render_aup_urge(toutou: str) -> str:
 # Chat (Ollama LLM)
 ###############################################################################
 
-
-def render_chat(answer: str) -> str:
-    """!chat / — the Ollama LLM answer, rendered as a quote block."""
-    return f"> 🤖 {answer}"
+#: The chat renderers live in :mod:`tetrabot.views.chat`.
 
 
 ###############################################################################

@@ -5,12 +5,17 @@ interactive ``discord.ui`` views; ``responders`` adapts a Discord message
 or interaction to one tiny output interface.  None of them query the
 database or contain command rules.
 """
-from tetrabot.views import formatting, responders, widgets
+from tetrabot.views import chat, formatting, responders, widgets
+from tetrabot.views.chat import (
+    render_chat_embed,
+    render_chat_error,
+    render_chat_stream,
+    render_chat_thinking,
+)
 from tetrabot.views.formatting import (
     render_aup_call,
     render_aup_urge,
     render_challenge_embed,
-    render_chat,
     render_crit_escalation,
     render_crit_hit,
     render_crit_miss,
@@ -36,11 +41,15 @@ __all__ = [
     "PrefixResponder",
     "Responder",
     "SlashResponder",
+    "chat",
     "formatting",
     "render_aup_call",
     "render_aup_urge",
     "render_challenge_embed",
-    "render_chat",
+    "render_chat_embed",
+    "render_chat_error",
+    "render_chat_stream",
+    "render_chat_thinking",
     "render_crit_escalation",
     "render_crit_hit",
     "render_crit_miss",

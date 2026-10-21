@@ -197,6 +197,12 @@ COMMANDS: tuple[CommandSpec, ...] = (
         params=(Param("message", "Le message à envoyer au chatbot"),),
         slash_params=(Param("message", "Le message à envoyer au chatbot"),),
     ),
+    CommandSpec(
+        name="forget",
+        description="Oublie la conversation en cours avec le chatbot",
+        handler="cmd_forget",
+        scope=Scope.BOTH,
+    ),
 )
 
 

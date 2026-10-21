@@ -66,6 +66,7 @@ class RecordingResponder:
 
     def __init__(self):
         self.sent: list[dict] = []
+        self.edits: list[str] = []
 
     async def __call__(self, content=None, embed=None, view=None, ephemeral=False):
         self.sent.append(
@@ -74,6 +75,11 @@ class RecordingResponder:
         return None
 
     async def defer(self):
+        return None
+
+    async def edit(self, content=None, embed=None):
+        """Record the streamed edits of the answer."""
+        self.edits.append(content)
         return None
 
 

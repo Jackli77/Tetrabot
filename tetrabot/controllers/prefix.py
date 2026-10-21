@@ -21,6 +21,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable
+from typing import Any
 
 import discord
 
@@ -92,6 +93,7 @@ class PrefixController(BaseController):
         )
         ctx.challenge = _make_challenge_handler(message, bot_client)
         ctx.paginate = _make_pagination_handler(message, bot_client)
+        ctx.typing = _make_typing_handler(message)
         return ctx
 
     # -- shared steps ---------------------------------------------------
@@ -148,6 +150,15 @@ def _make_challenge_handler(
         return user
 
     return challenge
+
+
+def _make_typing_handler(message) -> Callable[[], Any]:
+    """Build the "bot is typing" indicator for the ``!`` transport."""
+
+    def typing():
+        return message.channel.typing()
+
+    return typing
 
 
 def _make_pagination_handler(
