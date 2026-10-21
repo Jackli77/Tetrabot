@@ -1,1 +1,1 @@
-"""Test package for Tetrabot's MVC layers (run with tests\\run_all.py)."""
+"""Test package for Tetrabot (run with ``pytest``)."""

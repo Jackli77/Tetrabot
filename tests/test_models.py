@@ -1,59 +1,104 @@
 """Pure unit tests for the model layer (no I/O, no Discord, no database)."""
+from __future__ import annotations
+
 import random
 
-from models import duels
-from models.stats import Stats, winrate
+from tetrabot.models import duels
+from tetrabot.models.stats import Stats, winrate
 
 
-def run():
-    # --- winrate -----------------------------------------------------------
-    assert winrate(0, 5) == 0      # no game played -> 0%
-    assert winrate(3, 0) == 100    # only wins -> 100%
-    assert winrate(1, 1) == 50
-    assert winrate(1, 3) == 25
-    assert winrate(10, 5) == 66
+class TestWinrate:
+    def test_no_game_played(self):
+        assert winrate(0, 5) == 0
 
-    # --- Stats helpers -----------------------------------------------------
-    s = Stats(user_id=42, val=7, equity=-30, win=1, loss=3, username="alice")
-    assert s.winrate == 25
-    assert s.display_name == "alice"
-    assert Stats(user_id=42).display_name == "42"  # falls back to the id
-    assert Stats(user_id=42).winrate == 0
+    def test_only_wins(self):
+        assert winrate(3, 0) == 100
 
-    # --- Gamble duels ------------------------------------------------------
-    rng = random.Random(42)
-    for upper in (3, 10, 100):
-        rolls = duels.roll_gamble(upper, rng=rng)
-        assert 1 <= rolls[0] <= upper + 1
-        assert 1 <= rolls[1] <= upper + 1
+    def test_even_split(self):
+        assert winrate(1, 1) == 50
 
-    tie = duels.resolve_gamble(1, 2, 10, (5, 5))
-    assert tie.is_tie and tie.diff == 0 and tie.winner_id is None and tie.loser_id is None
+    def test_rounded_down(self):
+        assert winrate(1, 3) == 25
+        assert winrate(10, 5) == 66
 
-    r = duels.resolve_gamble(1, 2, 10, (9, 4))
-    assert r.winner_id == 1 and r.loser_id == 2 and r.diff == 5
-    assert r.decisive  # 5 >= 10 / 2
 
-    r = duels.resolve_gamble(1, 2, 10, (3, 2))
-    assert r.winner_id == 1 and r.diff == 1
-    assert not r.decisive
+class TestStats:
+    def test_winrate_property(self):
+        assert Stats(user_id=42, win=1, loss=3).winrate == 25
 
-    r = duels.resolve_gamble(1, 2, 10, (2, 7))
-    assert r.winner_id == 2 and r.loser_id == 1 and r.diff == 5
+    def test_display_name_prefers_username(self):
+        assert Stats(user_id=42, username="alice").display_name == "alice"
 
-    # --- Crit duels --------------------------------------------------------
-    rng = random.Random(42)
-    hits = sum(1 for _ in range(1000) if duels.crit_roll(15, rng=rng))
-    assert 0 < hits < 1000  # sanity: 15% odds lands sometimes, not always
-    assert all(not duels.crit_roll(0, rng=rng) for _ in range(50))    # 0% -> never
-    assert all(duels.crit_roll(101, rng=rng) for _ in range(50))      # >100% -> always
+    def test_display_name_falls_back_to_id(self):
+        assert Stats(user_id=42).display_name == "42"
 
-    assert duels.escalate_stake(10, True) == 20   # both crit -> stake doubles
-    assert duels.escalate_stake(10, False) == 10
+    def test_winrate_is_zero_without_games(self):
+        assert Stats(user_id=42).winrate == 0
 
-    r = duels.resolve_crit(1, 2, 3, 1, 4, 40)
-    assert r.winner_id == 1 and r.loser_id == 2 and r.ties == 1 and r.rounds == 4 and r.stake == 40
-    r = duels.resolve_crit(1, 2, 0, 2, 3, 40)
-    assert r.winner_id == 2 and r.loser_id == 1 and r.ties == 0
 
-    print("test_models: all passed")
+class TestGambleDuels:
+    def test_rolls_stay_in_range(self):
+        rng = random.Random(42)
+        for upper in (3, 10, 100):
+            rolls = duels.roll_gamble(upper, rng=rng)
+            assert 1 <= rolls[0] <= upper + 1
+            assert 1 <= rolls[1] <= upper + 1
+
+    def test_tie(self):
+        result = duels.resolve_gamble(1, 2, 10, (5, 5))
+        assert result.is_tie
+        assert result.diff == 0
+        assert result.winner_id is None
+        assert result.loser_id is None
+
+    def test_challenger_wins(self):
+        result = duels.resolve_gamble(1, 2, 10, (9, 4))
+        assert result.winner_id == 1
+        assert result.loser_id == 2
+        assert result.diff == 5
+        assert result.decisive
+
+    def test_close_win_is_not_decisive(self):
+        result = duels.resolve_gamble(1, 2, 10, (3, 2))
+        assert result.winner_id == 1
+        assert result.diff == 1
+        assert not result.decisive
+
+    def test_opponent_wins(self):
+        result = duels.resolve_gamble(1, 2, 10, (2, 7))
+        assert result.winner_id == 2
+        assert result.loser_id == 1
+        assert result.diff == 5
+
+
+class TestCritDuels:
+    def test_crit_lands_sometimes(self):
+        rng = random.Random(42)
+        hits = sum(1 for _ in range(1000) if duels.crit_roll(15, rng=rng))
+        assert 0 < hits < 1000
+
+    def test_zero_percent_never_crits(self):
+        rng = random.Random(1)
+        assert all(not duels.crit_roll(0, rng=rng) for _ in range(50))
+
+    def test_above_hundred_always_crits(self):
+        rng = random.Random(1)
+        assert all(duels.crit_roll(101, rng=rng) for _ in range(50))
+
+    def test_stake_doubles_when_both_crit(self):
+        assert duels.escalate_stake(10, True) == 20
+        assert duels.escalate_stake(10, False) == 10
+
+    def test_challenger_wins_the_crit_duel(self):
+        result = duels.resolve_crit(1, 2, 3, 1, 4, 40)
+        assert result.winner_id == 1
+        assert result.loser_id == 2
+        assert result.ties == 1
+        assert result.rounds == 4
+        assert result.stake == 40
+
+    def test_opponent_wins_the_crit_duel(self):
+        result = duels.resolve_crit(1, 2, 0, 2, 3, 40)
+        assert result.winner_id == 2
+        assert result.loser_id == 1
+        assert result.ties == 0

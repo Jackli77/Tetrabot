@@ -8,7 +8,8 @@ Un bot Discord modulaire en Python intégrant des **Slash Commands Discord (`/`)
 
 - **Slash Commands & UI Modernes :** Support natif des commandes slash (`/`) avec autocomplétion, descriptions, et composants interactifs (boutons `discord.ui.Button` pour la pagination et l'acceptation de défis).
 - **Base de données MongoDB :** Driver asynchrone Motor pour le stockage des statistiques de jeu, de l'historique et des classements.
-- **Détecteurs `!` et `/` :** Deux détecteurs (`detectors/prefix` et `detectors/slash`) reconnaissent chaque style d'invocation, construisent le même `CommandContext`, et appellent la même logique partagée (`controllers/commands.py`).
+- **Détecteurs `!` et `/` :** Deux détecteurs (`tetrabot/detectors/`) reconnaissent chaque style d'invocation, construisent le même `CommandContext`, et appellent la même logique partagée (`tetrabot/commands/`).
+- **Catalogue de commandes :** Une seule source de vérité (`tetrabot/catalog.py`) décrit chaque commande ; le routeur `!`, l'arbre `/` et l'embed d'aide en sont générés. Une commande ne peut donc pas exister sur un seul transport par inadvertance.
 - **Jeux d'argent & Duels :**
   - `/gamble <limite>` : Défi de roulette cappée contre un autre joueur.
   - `/crit <somme> [odds]` : Duel de coups critiques (chafer) avec relance automatique en cas d'égalité.
@@ -50,12 +51,12 @@ python -m venv .venv
 ### 3. Lancer le Bot
 Sur Windows, double-cliquez simplement sur **`run.bat`** ou exécutez :
 ```bash
-.venv\Scripts\python tetrabot.py
+.venv\Scripts\python -m tetrabot
 ```
 
 ### 4. Lancer les tests
 ```bash
-python tests\run_all.py
+.venv\Scripts\python -m pytest
 ```
 
 ---
@@ -64,55 +65,58 @@ python tests\run_all.py
 
 ```text
 Tetrabot/
-├── config/              # CONFIG/START — démarrage et réglages
-│   ├── settings.py      #   Variables d'environnement (.env) et constantes
-│   ├── utils.py         #   Helpers partagés (recherche de salons, ...)
-│   └── start.py         #   Fabrique du bot : détecteurs, events, slash tree
-├── detectors/           # DÉTECTEURS — un par style d'invocation, même logique
-│   ├── base.py          #   DetectionResult + classe de base BaseDetector
-│   ├── prefix/          #   Détecteur ! : ignore-self → DM/serveur → parse !cmd
-│   │   ├── detector.py  #   PrefixDetector + handle_message (dispatch)
-│   │   ├── base_command.py # Classe de base + dispatch générique vers LOGIC
-│   │   ├── router.py    #   Routage des messages ! vers les commandes
-│   │   ├── dm/          #   Commandes ! en message privé (commands)
-│   │   └── ...          #   Adapteurs ! (gamble, crit, clean, ...)
-│   └── slash/           #   Détecteur / : enregistrement de l'arbre slash
-│       └── detector.py  #   SlashDetector + 10 wrappers fins vers LOGIC
-├── controllers/         # CONTRÔLEURS — logique métier partagée (une seule fois)
-│   ├── context.py       #   CommandContext + fabriques de "respond" (! et /)
-│   ├── commands.py      #   Les fonctions cmd_* (source unique pour ! et /)
-│   └── registry.py      #   Registre LOGIC (auto-collecte des cmd_*)
-├── models/              # MODÈLES — accès données et règles pures
-│   ├── db.py            #   Connexion MongoDB Atlas (Motor) et collections
-│   ├── stats.py         #   Stats, winrate, leaderboard, enregistrement
-│   └── duels.py         #   Règles de duel gamble/crit (pures, testables)
-├── views/               # VUES — rendu pur, jamais d'accès BDD
-│   ├── formatting.py    #   Renderers (messages et embeds)
-│   ├── leaderboard.py   #   View de pagination du classement
-│   └── challenge.py     #   Views de défi (boutons Gamble/Crit)
-├── tests/               # Tests par couche (modèles, renderers, détecteurs)
-│   └── run_all.py       #   python tests\run_all.py
-├── tetrabot.py          # Point d'entrée (délègue à config.start)
-├── run.bat              # Lanceur Windows en un clic
-├── requirements.txt     # Dépendances Python modernes
-└── .env.example         # Modèle de configuration sécurisé
+├── tetrabot/               # Le paquet principal
+│   ├── __main__.py         #   Point d'entrée : python -m tetrabot
+│   ├── app.py              #   Fabrique du bot : intents, événements, arbre slash
+│   ├── config.py           #   Réglages (variables d'environnement et constantes)
+│   ├── catalog.py          #   CATALOGUE — la description de chaque commande
+│   ├── context.py          #   CommandContext + adaptateurs de réponse (! et /)
+│   ├── helpers.py          #   Petits utilitaires Discord (recherche de salon)
+│   ├── detectors/          # DÉTECTEURS — un par style d'invocation
+│   │   ├── base.py         #   BaseDetector + DetectionResult
+│   │   ├── prefix.py       #   Détecteur ! : ignore-self → DM/serveur → parsing
+│   │   └── slash.py        #   Détecteur / : arbre slash généré depuis le catalogue
+│   ├── commands/           # LOGIQUE PARTAGÉE — une seule implémentation par commande
+│   │   ├── logic.py        #   Les commandes simples (inc, random, aup, chat, ...)
+│   │   └── duels.py        #   Les duels (gamble, crit)
+│   ├── models/             # MODÈLES — accès données et règles pures
+│   │   ├── db.py           #   Connexion MongoDB (Motor) et collections
+│   │   ├── stats.py        #   Stats, winrate, leaderboard, enregistrement
+│   │   ├── duels.py        #   Règles de duel gamble/crit (pures, testables)
+│   │   └── llm.py          #   Client HTTP du LLM local Ollama
+│   └── views/              # VUES — rendu et widgets interactifs
+│       ├── formatting.py   #   Renderers (messages et embeds) — pur
+│       └── widgets.py      #   Views Discord (boutons, pagination)
+├── tests/                  # Tests pytest (par couche)
+├── pyproject.toml          # Métadonnées, packaging et config pytest
+├── requirements.txt        # Dépendances de production
+├── run.bat                 # Lanceur Windows en un clic
+└── .env.example            # Modèle de configuration sécurisé
 ```
 
-> **Architecture MVC + Détecteurs + Config/Start** :
-> chaque commande n'est implémentée **qu'une seule fois** dans
-> `controllers/commands.py` et sert aussi bien au préfixe `!` qu'aux
-> slash-commands `/`. Chaque détecteur ne fait que *reconnaître* son style
-> d'invocation et normaliser un `CommandContext` : `detectors/prefix`
+> **Architecture en couches + catalogue de commandes** :
+> chaque commande est implémentée **qu'une seule fois** dans
+> `tetrabot/commands/` et sert aussi bien au préfixe `!` qu'aux
+> slash-commands `/`. Les deux transports ne font que *reconnaître* leur
+> style d'invocation et normaliser un `CommandContext` : `detectors/prefix`
 > (ignore-self → routage DM/serveur → parsing du préfixe `!`) et
-> `detectors/slash` (enregistrement de l'arbre `/`). Les modèles ne
-> dépendent jamais de Discord, les vues n'accèdent jamais à la base de
-> données, et les contrôleurs orchestrent les deux puis rendent via
-> `ctx.respond(...)`. Le démarrage vit dans `config/start.py`.
+> `detectors/slash` (enregistrement de l'arbre `/`). Le `catalog.py` décrit
+> chaque commande une seule fois, et le routeur `!`, l'arbre `/` et l'embed
+> d'aide sont tous générés à partir de lui. Les modèles ne dépendent jamais
+> de Discord, les vues n'accèdent jamais à la base de données, et la logique
+> partagée orchestre les deux puis rend via `ctx.respond(...)`.
 
+### Ajouter une commande
+
+1. Écrivez `async def cmd_foo(ctx)` dans `tetrabot/commands/logic.py`.
+2. Ajoutez une entrée `CommandSpec` dans `tetrabot/catalog.py`.
+3. Ajoutez la fonction à `LOGIC` dans `tetrabot/commands/__init__.py`.
+
+Les deux transports, l'aide et les tests de cohérence sont mis à jour
+automatiquement.
 
 ---
 
 ## 📜 Licence
 
 Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
-
