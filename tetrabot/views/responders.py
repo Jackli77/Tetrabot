@@ -7,7 +7,11 @@ the command handlers never touch either directly.
 """
 from __future__ import annotations
 
+import logging
+
 import discord
+
+logger = logging.getLogger(__name__)
 
 
 class Responder:
@@ -74,11 +78,30 @@ class SlashResponder(Responder):
     :meth:`defer` was called first); every subsequent call uses
     ``interaction.followup.send``.  This transparently handles Discord's
     "respond once per interaction" rule.
+
+    The responder also *trusts the interaction itself*: if the interaction
+    has already been answered — by a view, or by anything else — it falls
+    back to a follow-up instead of raising ``InteractionResponded``.  A
+    command that dies on its second message leaves the user staring at a
+    half-finished answer, so this is deliberately forgiving.
     """
 
     def __init__(self, interaction: discord.Interaction):
         self.interaction = interaction
         self._used = False
+
+    def _already_answered(self) -> bool:
+        """Whether the interaction has been answered already."""
+        if self._used:
+            return True
+        response = getattr(self.interaction, "response", None)
+        is_done = getattr(response, "is_done", None)
+        if callable(is_done):
+            try:
+                return bool(is_done())
+            except Exception:
+                return False
+        return False
 
     async def __call__(
         self,
@@ -93,19 +116,26 @@ class SlashResponder(Responder):
         if ephemeral:
             kwargs["ephemeral"] = True
 
-        if not self._used:
+        if not self._already_answered():
             self._used = True
             # Interaction responses expose no message object.
-            await self.interaction.response.send_message(**kwargs)
-            return None
+            try:
+                await self.interaction.response.send_message(**kwargs)
+                return None
+            except discord.errors.InteractionResponded:
+                # Somebody else answered first: continue as a follow-up.
+                logger.debug("The interaction was already answered", exc_info=True)
         await self.interaction.followup.send(**kwargs)
         return None
 
     async def defer(self) -> None:
         """Acknowledge the interaction now, so long commands may take their time."""
-        if not self._used:
+        if not self._already_answered():
             self._used = True
-            await self.interaction.response.defer()
+            try:
+                await self.interaction.response.defer()
+            except discord.errors.InteractionResponded:
+                logger.debug("The interaction was already answered", exc_info=True)
 
     async def edit(
         self,
@@ -118,10 +148,13 @@ class SlashResponder(Responder):
         it edits the message Discord already published.
         """
         kwargs = {"content": content, "embed": embed}
-        if not self._used:
+        if not self._already_answered():
             self._used = True
-            await self.interaction.response.edit_message(**kwargs)
-            return
+            try:
+                await self.interaction.response.edit_message(**kwargs)
+                return
+            except discord.errors.InteractionResponded:
+                logger.debug("The interaction was already answered", exc_info=True)
         await self.interaction.edit_original_response(**kwargs)
 
 

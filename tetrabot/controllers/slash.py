@@ -81,7 +81,11 @@ class SlashController(BaseController):
         """Build the shared context for a slash invocation."""
         ctx = build_context(interaction, spec)
         if spec.needs_challenge:
-            ctx.challenge = _make_challenge_handler(interaction)
+            # The challenge is sent through the responder: it is the one
+            # that knows whether the interaction has already been
+            # answered, and sending it behind the responder's back would
+            # make the next reply fail.
+            ctx.challenge = _make_challenge_handler(interaction, ctx.respond)
         ctx.paginate = _make_pagination_handler(interaction, ctx.respond)
         ctx.typing = _make_typing_handler(interaction)
         return ctx
@@ -154,16 +158,22 @@ def _build_callback(spec: catalog.CommandSpec):
     return callback
 
 
-def _make_challenge_handler(interaction: discord.Interaction) -> Any:
+def _make_challenge_handler(interaction: discord.Interaction, responder: Any) -> Any:
     """Build the button-based challenge used by the duel handlers.
 
     The slash transport offers a button; the prefix transport offers a
     reaction.  Both end up calling the same shared handler.
+
+    The challenge message goes through ``responder`` — the same adapter the
+    rest of the command uses — so the "the interaction was already
+    answered" state stays in one place.  Answering the interaction behind
+    the responder's back would make the *next* reply of the duel fail with
+    ``InteractionResponded``.
     """
 
     async def challenge(request: ChallengeRequest) -> discord.User | None:
         view = ChallengeView(challenger=interaction.user, timeout=CHALLENGE_TIMEOUT)
-        await interaction.response.send_message(
+        await responder(
             embed=render_challenge_embed(request.title, request.description), view=view
         )
 
@@ -171,8 +181,10 @@ def _make_challenge_handler(interaction: discord.Interaction) -> Any:
         if view.accepted_by is None:
             return None
         await interaction.followup.send(
-            f"**{view.accepted_by.mention}** a accepté le challenge de "
-            f"{interaction.user.mention}"
+            content=(
+                f"**{view.accepted_by.mention}** a accepté le challenge de "
+                f"{interaction.user.mention}"
+            )
         )
         return view.accepted_by
 
