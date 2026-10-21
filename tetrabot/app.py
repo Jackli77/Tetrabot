@@ -3,11 +3,13 @@
 :func:`create_bot` builds a ready-to-run :class:`discord.ext.commands.Bot`:
 
 * privileged ``message_content`` intent (enable it in the Developer Portal),
-* the two controllers wired up:
+* the three controllers wired up:
 
   - :class:`tetrabot.controllers.prefix.PrefixController` handles ``!``
     messages (``on_message`` / ``on_message_edit`` → ``handle_message``),
   - :class:`tetrabot.controllers.slash.SlashController` registers the ``/`` tree,
+  - :class:`tetrabot.controllers.listen.ListenController` answers *every*
+    message of the channel the bot listens to,
 * Discord lifecycle events:
 
   - ``on_ready`` → sync slash commands, announce readiness, init the DB,
@@ -27,6 +29,8 @@ import discord
 from discord.ext import commands
 
 from tetrabot import config
+from tetrabot.controllers.listen import ListenController
+from tetrabot.controllers.listen import handle_message as handle_listen_message
 from tetrabot.controllers.prefix import PrefixController, handle_message
 from tetrabot.controllers.slash import SlashController
 from tetrabot.helpers import find_channel
@@ -45,6 +49,17 @@ async def run_prefix_message(message, bot_client, controller: PrefixController |
     return await handle_message(message, bot_client, controller=controller)
 
 
+async def run_listen_message(message, bot_client, controller: ListenController | None = None):
+    """Run an incoming message through the listening controller.
+
+    Thin wrapper around :func:`tetrabot.controllers.listen.handle_message`,
+    kept here for the same reason as :func:`run_prefix_message`.
+    """
+    if not config.CHAT_LISTEN:
+        return None
+    return await handle_listen_message(message, bot_client, controller=controller)
+
+
 def create_bot() -> commands.Bot:
     """Build the bot client with every event handler attached."""
     intents = discord.Intents.default()
@@ -52,9 +67,10 @@ def create_bot() -> commands.Bot:
 
     bot_client = commands.Bot(command_prefix=config.COMMAND_PREFIX, intents=intents)
 
-    # Controllers: one per invocation style, both feeding the same handlers.
+    # Controllers: one per invocation style, all feeding the same handlers.
     prefix_controller = PrefixController()
     slash_controller = SlashController()
+    listen_controller = ListenController()
 
     # Register the slash commands into the bot tree via the / controller.
     slash_controller.setup(bot_client, bot_client.tree)
@@ -97,6 +113,7 @@ def create_bot() -> commands.Bot:
     @bot_client.event
     async def on_message(message):
         await run_prefix_message(message, bot_client, controller=prefix_controller)
+        await run_listen_message(message, bot_client, controller=listen_controller)
 
     @bot_client.event
     async def on_message_edit(before, after):
@@ -142,4 +159,4 @@ def main() -> None:
     bot_client.run(config.BOT_TOKEN)
 
 
-__all__ = ["create_bot", "main", "run_prefix_message"]
+__all__ = ["create_bot", "main", "run_listen_message", "run_prefix_message"]

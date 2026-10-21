@@ -59,7 +59,14 @@ class Param:
 
 @dataclass(frozen=True)
 class CommandSpec:
-    """Everything the bot knows about a single command."""
+    """Everything the bot knows about a single command.
+
+    ``expose_as_slash`` and ``expose_as_prefix`` say whether a user may
+    invoke the command.  A command with both turned off is *internal*: it
+    is not in the ``/`` tree, not in the ``!`` router and not in the help
+    embed — but it is still in the catalog, so another transport (the
+    listening one) can reach it.
+    """
 
     name: str
     description: str
@@ -70,6 +77,7 @@ class CommandSpec:
     slash_names: tuple[str, ...] = ()
     slash_params: tuple[Param, ...] = ()
     expose_as_slash: bool = True
+    expose_as_prefix: bool = True
     ephemeral: bool = False
     needs_challenge: bool = False
 
@@ -193,9 +201,13 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec(
         name="chat",
         description="Envoie ton message au chatbot local (Ollama) et affiche sa réponse",
-        handler="cmd_chat",
+        handler="cmd_listen",
         params=(Param("message", "Le message à envoyer au chatbot"),),
         slash_params=(Param("message", "Le message à envoyer au chatbot"),),
+        # The chatbot answers every message of the listening channel: there
+        # is no command to type, so it is not exposed as one.
+        expose_as_slash=False,
+        expose_as_prefix=False,
     ),
     CommandSpec(
         name="forget",
@@ -217,17 +229,35 @@ def find(name: str) -> CommandSpec | None:
 
 def guild_commands() -> tuple[CommandSpec, ...]:
     """The commands usable in a guild channel."""
-    return tuple(spec for spec in COMMANDS if spec.scope.allows_guild)
+    return tuple(
+        spec
+        for spec in public_commands()
+        if spec.scope.allows_guild
+    )
 
 
 def dm_commands() -> tuple[CommandSpec, ...]:
     """The commands usable in a private message."""
-    return tuple(spec for spec in COMMANDS if spec.scope.allows_dm)
+    return tuple(
+        spec
+        for spec in public_commands()
+        if spec.scope.allows_dm
+    )
 
 
 def slash_commands() -> tuple[CommandSpec, ...]:
     """The commands exposed in the ``/`` tree."""
     return tuple(spec for spec in COMMANDS if spec.expose_as_slash)
+
+
+def prefix_commands() -> tuple[CommandSpec, ...]:
+    """The commands exposed in the ``!`` router."""
+    return tuple(spec for spec in COMMANDS if spec.expose_as_prefix)
+
+
+def public_commands() -> tuple[CommandSpec, ...]:
+    """The commands a user can invoke, in any transport."""
+    return tuple(spec for spec in COMMANDS if spec.expose_as_slash or spec.expose_as_prefix)
 
 
 __all__ = [
@@ -238,6 +268,8 @@ __all__ = [
     "dm_commands",
     "find",
     "guild_commands",
+    "prefix_commands",
+    "public_commands",
     "slash_commands",
 ]
 

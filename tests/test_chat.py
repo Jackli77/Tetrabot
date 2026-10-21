@@ -87,6 +87,10 @@ class TestContextSelection:
         assert ctx_model.is_noise("<@123> salut", bot_id=123) is True
         assert ctx_model.is_noise("salut", bot_id=123) is False
 
+    def test_addressed_messages_are_kept_when_asked(self):
+        """In the channel the bot listens to, addressing it is normal."""
+        assert ctx_model.is_noise("<@123> salut", bot_id=123, drop_addressed=False) is False
+
     def test_select_keeps_the_useful_messages(self):
         messages = [
             ("alice", "salut"),
@@ -108,6 +112,25 @@ class TestContextSelection:
         messages = [("a", "pareil"), ("b", "pareil"), ("c", "autre")]
         selected = ctx_model.select_context(messages, limit=10)
         assert selected == ["a: pareil", "c: autre"]
+
+    def test_the_bot_never_reads_its_own_messages(self):
+        """A bot that reads its own answers ends up answering them."""
+        messages = [
+            ctx_model.ChannelMessage(author="alice", author_id=1, content="salut"),
+            ctx_model.ChannelMessage(author="BOT", author_id=9, content="bonjour"),
+            ctx_model.ChannelMessage(author="bob", author_id=2, content="et toi ?"),
+        ]
+        selected = ctx_model.select_context(messages, limit=10, bot_id=9)
+        assert selected == ["alice: salut", "bob: et toi ?"]
+
+    def test_a_message_addressed_to_the_bot_is_kept_when_asked(self):
+        messages = [
+            ctx_model.ChannelMessage(author="alice", author_id=1, content="<@9> salut"),
+        ]
+        selected = ctx_model.select_context(
+            messages, limit=10, bot_id=9, drop_addressed=False
+        )
+        assert selected == ["alice: <@9> salut"]
 
 
 class TestChatRendering:

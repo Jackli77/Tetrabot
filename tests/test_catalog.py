@@ -26,6 +26,18 @@ class TestCatalogIntegrity:
         used = {spec.handler for spec in catalog.COMMANDS}
         assert used == set(HANDLERS), f"unreachable: {set(HANDLERS) - used}"
 
+    def test_the_chatbot_is_not_a_command(self):
+        """The chatbot answers the listening channel: it is not a command."""
+        spec = catalog.find("chat")
+        assert spec is not None
+        assert not spec.expose_as_prefix
+        assert not spec.expose_as_slash
+        assert "chat" not in [s.name for s in catalog.public_commands()]
+
+    def test_the_public_commands_are_the_exposed_ones(self):
+        for spec in catalog.public_commands():
+            assert spec.expose_as_slash or spec.expose_as_prefix
+
     def test_command_names_are_unique(self):
         names = [spec.name for spec in catalog.COMMANDS]
         assert len(names) == len(set(names))

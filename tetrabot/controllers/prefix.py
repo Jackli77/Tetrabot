@@ -192,6 +192,11 @@ async def handle_message(message, bot_client, controller: PrefixController | Non
         # with other bots that use the same prefix.
         return result
 
+    if not spec.expose_as_prefix:
+        # The command is not a prefix command (the chatbot answers the
+        # listening channel on its own): stay silent.
+        return result
+
     logger.info(
         "%s: %s%s %s",
         message.author.name,

@@ -37,8 +37,14 @@ class FakeChannel:
 
 
 class FakeSentMessage:
+    def __init__(self):
+        self.edits: list[dict] = []
+
     async def delete(self):
         return None
+
+    async def edit(self, **kwargs):
+        self.edits.append(kwargs)
 
 
 def make_message(content, author=None, channel=None, dm_channel=None):
@@ -215,6 +221,26 @@ class TestResponders:
         responder = PrefixResponder(message)
         asyncio.run(responder(content="hello"))
         assert channel.sent[0]["content"] == "hello"
+
+    def test_prefix_responder_edits_its_own_message(self):
+        """Editing somebody else's message is forbidden on Discord."""
+        channel = FakeChannel()
+        message = make_message("!inc", channel=channel)
+        responder = PrefixResponder(message)
+
+        sent = asyncio.run(responder(content="hello"))
+        asyncio.run(responder.edit(content="rewritten"))
+
+        # The user's message is untouched; the bot's own one is rewritten.
+        assert sent.edits == [{"content": "rewritten", "embed": None}]
+        assert not hasattr(message, "edit")
+
+    def test_prefix_responder_edit_without_a_message_does_nothing(self):
+        channel = FakeChannel()
+        message = make_message("!inc", channel=channel)
+        responder = PrefixResponder(message)
+        asyncio.run(responder.edit(content="nothing to edit"))
+        assert channel.sent == []
 
     def test_slash_responder_uses_response_then_followup(self):
         interaction = FakeSlashInteraction()

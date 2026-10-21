@@ -46,10 +46,16 @@ class Responder:
 
 
 class PrefixResponder(Responder):
-    """Replies to a ``!`` command by posting in the channel it came from."""
+    """Replies to a ``!`` command by posting in the channel it came from.
+
+    The responder remembers the message it posted, so :meth:`edit` rewrites
+    *that* message — the bot's own placeholder — instead of the message the
+    user sent.  Editing somebody else's message is forbidden on Discord.
+    """
 
     def __init__(self, message: discord.Message):
         self.message = message
+        self.sent: discord.Message | None = None
 
     async def __call__(
         self,
@@ -60,7 +66,10 @@ class PrefixResponder(Responder):
     ) -> discord.Message:
         # ``ephemeral`` is meaningless for a plain message: the flag only
         # exists so command logic can stay transport-agnostic.
-        return await self.message.channel.send(content=content, embed=embed, view=view)
+        self.sent = await self.message.channel.send(
+            content=content, embed=embed, view=view
+        )
+        return self.sent
 
     async def edit(
         self,
@@ -68,7 +77,11 @@ class PrefixResponder(Responder):
         embed: discord.Embed | None = None,
     ) -> None:
         """Edit the message this responder posted."""
-        await self.message.edit(content=content, embed=embed)
+        target = self.sent
+        if target is None:
+            # Nothing was posted yet: there is nothing to rewrite.
+            return
+        await target.edit(content=content, embed=embed)
 
 
 class SlashResponder(Responder):

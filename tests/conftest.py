@@ -66,7 +66,7 @@ class RecordingResponder:
 
     def __init__(self):
         self.sent: list[dict] = []
-        self.edits: list[str] = []
+        self.edits: list[dict] = []
 
     async def __call__(self, content=None, embed=None, view=None, ephemeral=False):
         self.sent.append(
@@ -79,8 +79,13 @@ class RecordingResponder:
 
     async def edit(self, content=None, embed=None):
         """Record the streamed edits of the answer."""
-        self.edits.append(content)
+        self.edits.append({"content": content, "embed": embed})
         return None
+
+    @property
+    def edited_contents(self) -> list[str]:
+        """The texts the responder was edited with."""
+        return [edit["content"] for edit in self.edits]
 
 
 class FakeUsers:

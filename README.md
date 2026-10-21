@@ -9,14 +9,17 @@ Un bot Discord modulaire en Python intégrant des **Slash Commands Discord (`/`)
 - **Slash Commands & UI Modernes :** Support natif des commandes slash (`/`) avec autocomplétion, descriptions, et composants interactifs (boutons `discord.ui.Button` pour la pagination et l'acceptation de défis).
 - **Base de données MongoDB :** Driver asynchrone Motor pour le stockage des statistiques de jeu, de l'historique et des classements.
 - **Architecture MVC :** Le code est réparti en trois couches à dépendances strictes — `models/` (données et règles métier), `views/` (rendu, widgets, adaptateurs de sortie) et `controllers/` (pipeline de requête et handlers partagés). Un test automatisé (`tests/test_controllers.py::TestArchitecture`) vérifie qu'aucune couche ne dépend d'une couche supérieure.
-- **Contrôleurs `!` et `/` :** Deux contrôleurs (`tetrabot/controllers/`) reconnaissent chaque style d'invocation, construisent le même `CommandContext`, et appellent le même handler partagé (`tetrabot/controllers/commands/`).
+- **Contrôleurs `!`, `/` et « écoute » :** Trois contrôleurs (`tetrabot/controllers/`) reconnaissent chaque style d'invocation, construisent le même `CommandContext`, et appellent le même handler partagé (`tetrabot/controllers/commands/`). Le contrôleur d'écoute répond à **tous** les messages du salon `Tetrabot`, sans commande à taper.
 - **Catalogue de commandes :** Une seule source de vérité (`tetrabot/catalog.py`) décrit chaque commande ; le routeur `!`, l'arbre `/` et l'embed d'aide en sont générés. Une commande ne peut donc pas exister sur un seul transport par inadvertance.
 - **Jeux d'argent & Duels :**
   - `/gamble <limite>` : Défi de roulette cappée contre un autre joueur.
   - `/crit <somme> [odds]` : Duel de coups critiques (chafer) avec relance automatique en cas d'égalité.
   - `/incscore` (ou `/leaderboard`) : Tableau des scores et classement par équité avec pagination par boutons.
   - `/random [min] [max]` : Tirage de nombres aléatoires.
-- **Chatbot (`/chat <message>`) :** Un vrai chatbot, pas une simple requête :
+- **Chatbot (salon `Tetrabot`) :** Un vrai chatbot, pas une simple requête :
+  - **Écoute active** : le bot répond à **chaque** message du salon `Tetrabot` — il n'y a plus de commande `/chat` à taper. Le nom du salon se change dans `CHAT_CHANNEL`, et `CHAT_LISTEN="0"` le fait taire.
+  - **Une réponse à la fois** : les messages d'un salon sont mis en file d'attente et traités dans l'ordre, pour ne jamais solliciter le modèle local en parallèle.
+  - **Il ne se répond pas à lui-même** : ses propres messages sont ignorés, et le contexte qu'il reçoit ne contient jamais ses réponses précédentes.
   - **Réponse en streaming** : le texte s'écrit dans le salon au fur et à mesure, plus un indicateur « le bot écrit » — plus de silence de 20 secondes.
   - **Outils de recherche** : le bot *cherche* les informations qu'il ne peut pas connaître, via le **function calling** d'Ollama :
     - `get_weather` — la météo actuelle et les jours à venir (Open-Meteo, sans clé API) ;
@@ -106,6 +109,7 @@ Tetrabot/
 │       ├── context.py      #   CommandContext + ChallengeRequest
 │       ├── prefix.py       #   Contrôleur `!` : ignore-self → routage → parsing
 │       ├── slash.py        #   Contrôleur `/` : arbre slash généré depuis le catalogue
+│       ├── listen.py       #   Contrôleur « écoute » : répond à chaque message du salon
 │       └── commands/       #   Les handlers partagés (une implémentation par commande)
 │           ├── logic.py    #     Les commandes simples (inc, random, aup, ...)
 │           ├── chat.py     #     Le chatbot (streaming, mémoire, relance)
@@ -120,10 +124,12 @@ Tetrabot/
 > **Architecture MVC + catalogue de commandes** :
 > chaque commande est implémentée **qu'une seule fois** dans
 > `tetrabot/controllers/commands/` et sert aussi bien au préfixe `!` qu'aux
-> slash-commands `/`. Les deux transports ne font que *reconnaître* leur
+> slash-commands `/`. Les transports ne font que *reconnaître* leur
 > style d'invocation et normaliser un `CommandContext` : `controllers/prefix`
-> (ignore-self → routage DM/serveur → parsing du préfixe `!`) et
-> `controllers/slash` (enregistrement de l'arbre `/`). Le `catalog.py` décrit
+> (ignore-self → routage DM/serveur → parsing du préfixe `!`),
+> `controllers/slash` (enregistrement de l'arbre `/`) et
+> `controllers/listen` (détection du salon écouté → file d'attente par
+> salon). Le `catalog.py` décrit
 > chaque commande une seule fois, et le routeur `!`, l'arbre `/` et l'embed
 > d'aide sont tous générés à partir de lui. Le **Modèle** ne dépend jamais
 > de Discord, la **Vue** n'accède jamais à la base de données ni au

@@ -1,6 +1,6 @@
 """End-to-end tests of the chat command itself.
 
-They drive ``cmd_chat`` with a fake model, so the whole flow is exercised:
+They drive ``cmd_listen`` with a fake model, so the whole flow is exercised:
 the acknowledgement, the streaming edits, the retry on an empty answer, the
 memory and the final rendering.
 """
@@ -37,6 +37,8 @@ class FakeHistoryMessage:
 
 
 class FakeHistoryChannel:
+    """A channel whose history is newest-first, like Discord's."""
+
     def __init__(self, messages=()):
         self._messages = list(messages)
         self.id = 42
@@ -64,7 +66,7 @@ def patch_config(monkeypatch):
 
 class TestChatCommand:
     def test_streams_the_answer_into_the_channel(self, make_ctx, patch_config, monkeypatch):
-        """The answer is written progressively, then sent as a message."""
+        """The answer is written progressively, into a single message."""
         async def fake_stream(prompt, context=None, system=None, **kwargs):
             yield "bon"
             yield "jour"
@@ -73,14 +75,14 @@ class TestChatCommand:
 
         ctx, responder = make_ctx(author=FakeUser(1, "alice"), args=["salut"])
         ctx.channel = FakeHistoryChannel()
-        asyncio.run(chat_cmd.cmd_chat(ctx))
+        asyncio.run(chat_cmd.cmd_listen(ctx))
 
         # The placeholder is sent first, then the streamed edits.
         assert "réfléchis" in responder.sent[0]["content"]
         assert responder.edits, "the answer should have been streamed"
-        assert responder.edits[-1] == "> 🤖 bonjour"
-        # ...and the final answer is posted.
-        assert responder.sent[-1]["content"] == "> 🤖 bonjour"
+        assert responder.edited_contents[-1] == "> 🤖 bonjour"
+        # The answer replaces the placeholder: it is not posted twice.
+        assert len(responder.sent) == 1
 
     def test_asks_the_model_with_the_user_message(self, make_ctx, patch_config, monkeypatch):
         seen = {}
@@ -92,11 +94,11 @@ class TestChatCommand:
 
         monkeypatch.setattr(chat_cmd.llm, "stream_complete", fake_stream)
 
-        ctx, responder = make_ctx(author=FakeUser(1, "alice"), args=["salut", "comment", "ça", "va"])
+        ctx, responder = make_ctx(author=FakeUser(1, "alice"), args=["salut"])
         ctx.channel = FakeHistoryChannel()
-        asyncio.run(chat_cmd.cmd_chat(ctx))
+        asyncio.run(chat_cmd.cmd_listen(ctx))
 
-        assert seen["prompt"] == "salut comment ça va"
+        assert seen["prompt"] == "salut"
         assert "Tetrabot" in seen["system"]
 
     def test_remembers_the_exchange(self, make_ctx, patch_config, monkeypatch):
@@ -108,7 +110,7 @@ class TestChatCommand:
 
         ctx, _ = make_ctx(author=FakeUser(1, "alice"), args=["comment tu te nommes ?"])
         ctx.channel = FakeHistoryChannel()
-        asyncio.run(chat_cmd.cmd_chat(ctx))
+        asyncio.run(chat_cmd.cmd_listen(ctx))
 
         remembered = chat_cmd.MEMORY.context(ctx.channel.id, 20)
         assert any("comment tu te nommes ?" in line for line in remembered)
@@ -132,10 +134,10 @@ class TestChatCommand:
 
         ctx, responder = make_ctx(author=FakeUser(1, "alice"), args=["salut"])
         ctx.channel = FakeHistoryChannel()
-        asyncio.run(chat_cmd.cmd_chat(ctx))
+        asyncio.run(chat_cmd.cmd_listen(ctx))
 
         assert calls == ["stream", "complete"]
-        assert responder.sent[-1]["content"] == "> 🤖 une vraie reponse"
+        assert responder.edited_contents[-1] == "> 🤖 une vraie reponse"
 
     def test_a_dead_server_is_reported_clearly(self, make_ctx, patch_config, monkeypatch):
         async def fake_stream(prompt, context=None, system=None, **kwargs):
@@ -146,7 +148,7 @@ class TestChatCommand:
 
         ctx, responder = make_ctx(author=FakeUser(1, "alice"), args=["salut"])
         ctx.channel = FakeHistoryChannel()
-        asyncio.run(chat_cmd.cmd_chat(ctx))
+        asyncio.run(chat_cmd.cmd_listen(ctx))
 
         assert "Ollama ne répond pas" in responder.sent[-1]["content"]
 
@@ -159,7 +161,7 @@ class TestChatCommand:
 
         ctx, responder = make_ctx(author=FakeUser(1, "alice"), args=["salut"])
         ctx.channel = FakeHistoryChannel()
-        asyncio.run(chat_cmd.cmd_chat(ctx))
+        asyncio.run(chat_cmd.cmd_listen(ctx))
 
         assert "Modèle introuvable" in responder.sent[-1]["content"]
 
@@ -173,14 +175,16 @@ class TestChatCommand:
 
         ctx, responder = make_ctx(author=FakeUser(1, "alice"), args=["raconte"])
         ctx.channel = FakeHistoryChannel()
-        asyncio.run(chat_cmd.cmd_chat(ctx))
+        asyncio.run(chat_cmd.cmd_listen(ctx))
 
-        assert responder.sent[-1]["embed"] is not None
+        # The long answer replaces the streamed text with an embed.
+        assert responder.edits[-1]["embed"] is not None
 
-    def test_an_empty_command_is_refused(self, make_ctx, patch_config):
-        ctx, responder = make_ctx(author=FakeUser(1, "alice"), args=[])
-        asyncio.run(chat_cmd.cmd_chat(ctx))
-        assert "Ecris quelque chose" in responder.sent[0]["content"]
+    def test_an_empty_message_is_ignored(self, make_ctx, patch_config):
+        """An empty message has nothing to answer."""
+        ctx, responder = make_ctx(author=FakeUser(1, "alice"), args=[""])
+        asyncio.run(chat_cmd.cmd_listen(ctx))
+        assert responder.sent == []
 
     def test_forget_clears_the_memory(self, make_ctx, patch_config, monkeypatch):
         async def fake_stream(prompt, context=None, system=None, **kwargs):
@@ -190,7 +194,7 @@ class TestChatCommand:
 
         ctx, _ = make_ctx(author=FakeUser(1, "alice"), args=["salut"])
         ctx.channel = FakeHistoryChannel()
-        asyncio.run(chat_cmd.cmd_chat(ctx))
+        asyncio.run(chat_cmd.cmd_listen(ctx))
         assert chat_cmd.MEMORY.context(ctx.channel.id, 20)
 
         asyncio.run(chat_cmd.cmd_forget(ctx))

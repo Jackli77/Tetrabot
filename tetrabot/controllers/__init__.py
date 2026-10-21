@@ -12,6 +12,8 @@ the exact same code:
   pipeline (ignore-self → DM/guild routing → prefix parsing).
 * :mod:`tetrabot.controllers.slash` — the ``/`` controller: native slash
   tree registration, generated from the command catalog.
+* :mod:`tetrabot.controllers.listen` — the listening controller: every
+  message of the channel the bot listens to is answered.
 * :mod:`tetrabot.controllers.commands` — the shared command handlers.
 
 Controllers never contain business rules and never query the database
@@ -19,6 +21,8 @@ directly — they only detect, normalise, and delegate.
 """
 from tetrabot.controllers.base import BaseController, DetectionResult
 from tetrabot.controllers.context import ChallengeRequest, CommandContext
+from tetrabot.controllers.listen import ListenController
+from tetrabot.controllers.listen import handle_message as handle_listen_message
 from tetrabot.controllers.prefix import PrefixController, handle_message
 from tetrabot.controllers.slash import SlashController, setup_slash_commands
 
@@ -27,8 +31,10 @@ __all__ = [
     "ChallengeRequest",
     "CommandContext",
     "DetectionResult",
+    "ListenController",
     "PrefixController",
     "SlashController",
+    "handle_listen_message",
     "handle_message",
     "setup_slash_commands",
 ]

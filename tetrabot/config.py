@@ -73,6 +73,14 @@ CHAT_STREAM = os.getenv("CHAT_STREAM", "1") not in ("0", "false", "False")
 #: Discord rate-limits message edits.
 CHAT_EDIT_INTERVAL = float(os.getenv("CHAT_EDIT_INTERVAL", "1.2"))
 
+#: The name of the channel the bot listens to.  Every message sent in that
+#: channel is answered by the chatbot, without any command.
+CHAT_CHANNEL = os.getenv("CHAT_CHANNEL", "Tetrabot")
+
+#: Whether the bot answers the messages of the listening channel.  Set it to
+#: "0" to keep the chatbot quiet and only reach it through a command.
+CHAT_LISTEN = os.getenv("CHAT_LISTEN", "1") not in ("0", "false", "False")
+
 #: How many conversations are remembered per channel.
 CHAT_MEMORY_MESSAGES = int(os.getenv("CHAT_MEMORY_MESSAGES", "20"))
 
@@ -108,8 +116,10 @@ __all__ = [
     "CHANNEL_BOT_ACTIVITY",
     "CHANNEL_DELETED",
     "CHANNEL_VOICE",
+    "CHAT_CHANNEL",
     "CHAT_CONTEXT_MESSAGES",
     "CHAT_EDIT_INTERVAL",
+    "CHAT_LISTEN",
     "CHAT_MEMORY_MESSAGES",
     "CHAT_MEMORY_TTL",
     "CHAT_MAX_TOOL_ROUNDS",

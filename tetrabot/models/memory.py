@@ -74,6 +74,15 @@ class Conversation:
             lines = turn_lines + lines
         return lines
 
+    def user_texts(self) -> set[str]:
+        """The texts the users already said, as the memory remembers them.
+
+        The channel history and the memory overlap: a message the bot has
+        already answered is in both.  Comparing the texts lets the caller
+        drop the duplicates instead of sending the same line twice.
+        """
+        return {turn.user.strip() for turn in self.turns if turn.user.strip()}
+
     def clear(self) -> None:
         """Forget everything."""
         self.turns.clear()
@@ -122,6 +131,10 @@ class ConversationStore:
         if max_lines is None:
             max_lines = self.max_messages
         return self.get(channel_id).context(max_lines)
+
+    def user_texts(self, channel_id: int) -> set[str]:
+        """The texts already remembered for a channel."""
+        return self.get(channel_id).user_texts()
 
     def clear(self, channel_id: int) -> None:
         """Forget a channel's conversation."""

@@ -70,13 +70,13 @@ class TestToolLoop:
         monkeypatch.setattr(chat_cmd, "_run_tool", fake_tool)
 
         ctx, responder = build_ctx(make_ctx, ["Quel temps fait-il a Paris ?"])
-        asyncio.run(chat_cmd.cmd_chat(ctx))
+        asyncio.run(chat_cmd.cmd_listen(ctx))
 
         assert len(rounds) == 2, "the model should be asked twice"
         # The second round carries the tool result.
         assert rounds[1][-1]["role"] == "tool"
         assert "14" in rounds[1][-1]["content"]
-        assert responder.sent[-1]["content"] == "> 🤖 Il fait 14 degres a Paris."
+        assert responder.edited_contents[-1] == "> 🤖 Il fait 14 degres a Paris."
 
     def test_several_tools_at_once_are_all_run(self, make_ctx, patch_config, monkeypatch):
         """The model may ask for two tools in the same turn."""
@@ -99,7 +99,7 @@ class TestToolLoop:
         monkeypatch.setattr(chat_cmd, "_run_tool", fake_tool)
 
         ctx, responder = build_ctx(make_ctx, ["Meteo et heure ?"])
-        asyncio.run(chat_cmd.cmd_chat(ctx))
+        asyncio.run(chat_cmd.cmd_listen(ctx))
 
         assert ran == ["get_weather", "get_datetime"]
         # Both results are fed back, one tool message each.
@@ -125,7 +125,7 @@ class TestToolLoop:
         monkeypatch.setattr(chat_cmd, "_run_tool", fake_tool)
 
         ctx, _ = build_ctx(make_ctx, ["question"])
-        asyncio.run(chat_cmd.cmd_chat(ctx))
+        asyncio.run(chat_cmd.cmd_listen(ctx))
 
         assistant = [m for m in rounds[1] if m["role"] == "assistant"]
         assert len(assistant) == 1
@@ -158,7 +158,7 @@ class TestToolLoop:
         monkeypatch.setattr(chat_cmd, "_run_tool", fake_tool)
 
         ctx, responder = build_ctx(make_ctx, ["boucle"])
-        asyncio.run(chat_cmd.cmd_chat(ctx))
+        asyncio.run(chat_cmd.cmd_listen(ctx))
 
         # CHAT_MAX_TOOL_ROUNDS is 3, so at most 4 rounds are asked.
         assert len(rounds) <= 4
@@ -173,7 +173,7 @@ class TestToolLoop:
         monkeypatch.setattr(chat_cmd.llm, "stream_complete", fake_stream)
 
         ctx, _ = build_ctx(make_ctx, ["salut"])
-        asyncio.run(chat_cmd.cmd_chat(ctx))
+        asyncio.run(chat_cmd.cmd_listen(ctx))
 
         names = {t["function"]["name"] for t in seen["tools"]}
         assert "get_weather" in names
