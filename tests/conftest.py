@@ -8,6 +8,7 @@ from __future__ import annotations
 import pytest
 
 from tetrabot.controllers.context import CommandContext
+from tetrabot.models import llm
 
 
 class FakeAvatar:
@@ -164,6 +165,57 @@ def make_ctx():
         return ctx, responder
 
     return _make
+
+
+class FakeModel:
+    """A model that replays a script, and records what it was asked.
+
+    It plugs into the agent the same way the real model does, so the whole
+    loop — including the tool calls — is exercised for real.
+    """
+
+    def __init__(self, script=None):
+        #: Each turn is ``(text, [(tool_name, arguments), ...])``.
+        self.script = list(script or [])
+        #: The messages of each round, as the model received them.
+        self.rounds: list[list[dict]] = []
+        #: The tools offered to the model, per round.
+        self.offered: list[list[dict]] = []
+
+    def _next(self):
+        if not self.script:
+            return "", []
+        turn = self.script.pop(0) if len(self.script) > 1 else self.script[0]
+        return turn
+
+    async def complete(self, messages, tools):
+        """The next turn of the script, as a completion."""
+        self.rounds.append(list(messages))
+        self.offered.append(list(tools))
+        text, calls = self._next()
+        return llm.Completion(
+            content=text,
+            tool_calls=[
+                llm.ToolCall(name=name, arguments=arguments, id=f"c{index}")
+                for index, (name, arguments) in enumerate(calls)
+            ],
+        )
+
+    async def stream(self, messages, tools):
+        """The next turn of the script, yielded word by word."""
+        completion = await self.complete(messages, tools)
+        for word in completion.content.split(" "):
+            if word:
+                yield word + " "
+        for call in completion.tool_calls:
+            yield call
+
+
+@pytest.fixture
+def fake_model():
+    """The :class:`FakeModel` factory, ready to be scripted."""
+    return FakeModel
+
 
 
 @pytest.fixture

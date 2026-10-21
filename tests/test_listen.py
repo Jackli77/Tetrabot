@@ -231,14 +231,27 @@ class TestListenDispatch:
 class TestListenEndToEnd:
     """The whole path: a message in the channel → an answer in the channel."""
 
-    def test_a_message_produces_an_answer(self, monkeypatch):
+    @pytest.fixture
+    def scripted_agent(self, monkeypatch):
+        """Make the chatbot use a scripted model instead of Ollama."""
+        from tetrabot.controllers.commands import chat as chat_cmd
+        from tetrabot.models.agent import Agent
+
+        from .conftest import FakeModel
+
+        def _install(script):
+            model = FakeModel(script)
+            monkeypatch.setattr(
+                chat_cmd, "Agent", lambda **kwargs: Agent(backend=model, **kwargs)
+            )
+            return model
+
+        return _install
+
+    def test_a_message_produces_an_answer(self, monkeypatch, scripted_agent):
         from tetrabot.controllers.commands import chat as chat_cmd
 
-        async def fake_stream(prompt, context=None, system=None, **kwargs):
-            yield "bonjour"
-
-        monkeypatch.setattr(chat_cmd.llm, "stream_complete", fake_stream)
-        monkeypatch.setattr(chat_cmd.config, "CHAT_STREAM", True)
+        scripted_agent([("bonjour", [])])
         monkeypatch.setattr(chat_cmd.config, "CHAT_EDIT_INTERVAL", 0.0)
 
         bot = FakeBot()
@@ -258,15 +271,11 @@ class TestListenEndToEnd:
         assert len(channel.messages) == 1
         assert channel.messages[0].edits[-1]["content"] == "> 🤖 bonjour"
 
-    def test_the_answer_is_remembered(self, monkeypatch):
+    def test_the_answer_is_remembered(self, monkeypatch, scripted_agent):
         """The next message of the channel builds on the previous one."""
         from tetrabot.controllers.commands import chat as chat_cmd
 
-        async def fake_stream(prompt, context=None, system=None, **kwargs):
-            yield "je m'appelle Tetrabot"
-
-        monkeypatch.setattr(chat_cmd.llm, "stream_complete", fake_stream)
-        monkeypatch.setattr(chat_cmd.config, "CHAT_STREAM", True)
+        scripted_agent([("je m'appelle Tetrabot", [])])
         monkeypatch.setattr(chat_cmd.config, "CHAT_EDIT_INTERVAL", 0.0)
 
         bot = FakeBot()

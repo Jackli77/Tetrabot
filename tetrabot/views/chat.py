@@ -163,10 +163,71 @@ def render_chat_thinking() -> str:
     return "🤖 *Je réfléchis…*"
 
 
+#: The emoji of each kind of step of a trace.
+TRACE_ICONS = {
+    "think": "💭",
+    "tool": "🔧",
+    "observation": "👁",
+    "answer": "🤖",
+}
+
+#: The label of each kind of step of a trace.
+TRACE_LABELS = {
+    "think": "Raisonnement",
+    "tool": "Outil appelé",
+    "observation": "Résultat de l'outil",
+    "answer": "Réponse",
+}
+
+#: How many characters of a step are shown in the embed.
+TRACE_EMBED_LIMIT = 500
+
+
+def render_agent_trace(trace) -> discord.Embed:
+    """The trace of an agent run, as an embed.
+
+    This is what makes the agent *legible*: the reader sees which tools
+    were called, what they returned and how long each step took — not just
+    the final answer.
+    """
+    embed = discord.Embed(
+        title="🧠 Trace de l'agent",
+        colour=discord.Colour.blurple(),
+    )
+
+    if not trace.steps:
+        embed.description = "L'agent n'a rien fait."
+        return embed
+
+    for step in trace.steps:
+        icon = TRACE_ICONS.get(step.kind, "•")
+        label = TRACE_LABELS.get(step.kind, step.kind)
+        name = f"{icon} {label}"
+        if step.name:
+            name = f"{name} — `{step.name}`"
+
+        content = (step.content or "").strip()
+        if len(content) > TRACE_EMBED_LIMIT:
+            content = content[: TRACE_EMBED_LIMIT] + "…"
+        value = content or "—"
+        if step.duration_ms:
+            value = f"_{step.duration_ms} ms_\n{value}"
+        embed.add_field(name=name[:256], value=value[:1024], inline=False)
+
+    footer = trace.summary()
+    if trace.tools_used:
+        footer = f"outils : {', '.join(trace.tools_used)} · {footer}"
+    embed.set_footer(text=footer[:2048])
+    return embed
+
+
 __all__ = [
     "CODE_BLOCK_RE",
     "DISCORD_CHAR_LIMIT",
     "EMBED_DESCRIPTION_LIMIT",
+    "TRACE_ICONS",
+    "TRACE_LABELS",
+    "render_agent_trace",
     "render_chat",
     "render_chat_embed",
     "render_chat_error",

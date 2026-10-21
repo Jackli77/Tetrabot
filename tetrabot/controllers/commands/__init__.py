@@ -16,7 +16,7 @@ To add a new command:
     3. Done — both transports pick it up automatically.
 """
 from tetrabot.controllers.commands import chat, duels, logic
-from tetrabot.controllers.commands.chat import cmd_forget, cmd_listen
+from tetrabot.controllers.commands.chat import cmd_forget, cmd_listen, cmd_trace
 from tetrabot.controllers.commands.duels import cmd_crit, cmd_gamble
 from tetrabot.controllers.commands.logic import (
     cmd_aup,
@@ -40,6 +40,7 @@ HANDLERS = {
     "cmd_incscore": cmd_incscore,
     "cmd_listen": cmd_listen,
     "cmd_random": cmd_random,
+    "cmd_trace": cmd_trace,
 }
 
 __all__ = [
@@ -55,6 +56,7 @@ __all__ = [
     "cmd_incscore",
     "cmd_listen",
     "cmd_random",
+    "cmd_trace",
     "duels",
     "logic",
 ]

@@ -215,6 +215,12 @@ COMMANDS: tuple[CommandSpec, ...] = (
         handler="cmd_forget",
         scope=Scope.BOTH,
     ),
+    CommandSpec(
+        name="trace",
+        description="Affiche comment l'agent a trouvé sa dernière réponse",
+        handler="cmd_trace",
+        scope=Scope.GUILD,
+    ),
 )
 
 
