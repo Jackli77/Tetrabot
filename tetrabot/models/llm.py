@@ -121,7 +121,7 @@ def tool_call_message(
 
 
 def _build_messages(
-    context: list[str], prompt: str, system: str | None = None
+    context: list[str], prompt: str | None = None, system: str | None = None
 ) -> list[dict[str, str]]:
     """Build an Ollama ``messages`` array from system prompt + context + prompt.
 
@@ -136,7 +136,8 @@ def _build_messages(
         line = line.strip()
         if line:
             messages.append({"role": "user", "content": line})
-    messages.append({"role": "user", "content": prompt})
+    if prompt:
+        messages.append({"role": "user", "content": prompt})
     return messages
 
 
@@ -192,7 +193,7 @@ def _url() -> str:
 
 
 def build_conversation(
-    prompt: str,
+    prompt: str | None = None,
     context: list[str] | None = None,
     system: str | None = None,
 ) -> list[dict[str, Any]]:
@@ -206,7 +207,7 @@ def build_conversation(
 
 
 async def chat(
-    prompt: str,
+    prompt: str | None = None,
     context: list[str] | None = None,
     system: str | None = None,
     *,
@@ -325,7 +326,7 @@ def _as_error(status: int, body: str) -> OllamaError:
 
 
 async def complete(
-    prompt: str,
+    prompt: str | None = None,
     context: list[str] | None = None,
     system: str | None = None,
     *,
@@ -378,7 +379,7 @@ async def complete(
 
 
 async def stream_complete(
-    prompt: str,
+    prompt: str | None = None,
     context: list[str] | None = None,
     system: str | None = None,
     *,
@@ -447,7 +448,7 @@ async def stream_complete(
 
 
 async def stream_chat(
-    prompt: str,
+    prompt: str | None = None,
     context: list[str] | None = None,
     system: str | None = None,
     *,
