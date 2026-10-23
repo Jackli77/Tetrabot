@@ -94,6 +94,60 @@ class TestSharedControllerReplies:
         assert embed.colour == discord.Colour.gold()
 
 
+class TestAgentTraceView:
+    """The trace of a run, rendered for Discord."""
+
+    def _trace(self):
+        from tetrabot.models.agent import AgentTrace
+
+        trace = AgentTrace()
+        trace.add("think", content="Je regarde la meteo.")
+        trace.add("tool", name="get_weather", content='{"city": "Paris"}', duration_ms=12)
+        trace.add("observation", name="get_weather", content='{"ok": true}', duration_ms=12)
+        trace.add("answer", content="Il fait 14 degres.")
+        return trace
+
+    def test_the_trace_becomes_an_embed(self):
+        from tetrabot.views.chat import render_agent_trace
+
+        embed = render_agent_trace(self._trace())
+        assert embed.title == "🧠 Trace de l'agent"
+        assert len(embed.fields) == 4
+
+    def test_each_step_becomes_a_field(self):
+        from tetrabot.views.chat import render_agent_trace
+
+        embed = render_agent_trace(self._trace())
+        names = [field.name for field in embed.fields]
+        assert "Raisonnement" in names[0]
+        assert "get_weather" in names[1]
+        assert "Réponse" in names[-1]
+
+    def test_the_footer_summarises_the_run(self):
+        from tetrabot.views.chat import render_agent_trace
+
+        embed = render_agent_trace(self._trace())
+        assert embed.footer.text is not None
+        assert "round" in embed.footer.text
+
+    def test_an_empty_trace_says_so(self):
+        from tetrabot.models.agent import AgentTrace
+        from tetrabot.views.chat import render_agent_trace
+
+        embed = render_agent_trace(AgentTrace())
+        assert embed.description == "L'agent n'a rien fait."
+
+    def test_a_huge_step_is_truncated(self):
+        from tetrabot.models.agent import AgentTrace
+        from tetrabot.views.chat import render_agent_trace
+
+        trace = AgentTrace()
+        trace.add("observation", name="big", content="x" * 5000)
+        embed = render_agent_trace(trace)
+
+        assert len(embed.fields[0].value) <= 1024
+
+
 class TestHelpEmbed:
     def test_embed_has_one_field_per_group(self):
         embed = fmt.render_help("!")

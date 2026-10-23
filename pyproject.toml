@@ -4,11 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tetrabot"
-version = "1.0.0"
-description = "A modular Discord bot with slash commands, prefix commands and MongoDB persistence."
+version = "1.1.0"
+description = "A tool-using AI agent that lives in a Discord channel, powered by a local LLM."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
+keywords = ["discord", "ai", "agent", "llm", "ollama", "tools"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Communications :: Chat",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
 dependencies = [
     "discord.py>=2.4.0",
     "motor>=3.7.0",
@@ -21,10 +27,11 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
+    "ruff>=0.6.0",
 ]
 
 [project.scripts]
-tetrabot = "tetrabot.app:main"
+tetrabot = "tetrabot.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["tetrabot*"]

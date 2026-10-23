@@ -17,7 +17,6 @@ Everything that makes a chatbot pleasant to talk to lives here:
 """
 from __future__ import annotations
 
-import json
 import logging
 import time
 
@@ -25,11 +24,14 @@ from tetrabot import config
 from tetrabot.controllers.context import CommandContext
 from tetrabot.models import context as ctx_model
 from tetrabot.models import llm
+from tetrabot.models.agent import Agent, AgentTrace
 from tetrabot.models.memory import ConversationStore
-from tetrabot.models.tools import registry
 from tetrabot.views import chat as chat_view
 
 logger = logging.getLogger(__name__)
+
+#: The trace of the last answer of each channel, so ``/trace`` can show it.
+LAST_TRACES: dict[int, AgentTrace] = {}
 
 #: The conversation memory, shared by every channel of the bot.
 MEMORY = ConversationStore(
@@ -160,116 +162,6 @@ def _drop_remembered(
     return [m for m in messages if m.content.strip() not in remembered]
 
 
-async def _run_tool(call: llm.ToolCall) -> str:
-    """Run one tool the model asked for and return its result as text.
-
-    A tool that does not exist, or that fails, produces a message the model
-    can read and relay — never an exception.
-    """
-    tool = registry.find_tool(call.name)
-    if tool is None:
-        return json.dumps(
-            {"ok": False, "error": f"there is no tool called {call.name!r}"},
-            ensure_ascii=False,
-        )
-    logger.info("chatbot calls the tool %s(%s)", call.name, call.arguments)
-    result = await tool.call(**call.arguments)
-    return result.to_text()
-
-
-async def _stream_answer(
-    ctx: CommandContext,
-    prompt: str,
-    context: list[str],
-    system: str = CHAT_SYSTEM_PROMPT,
-) -> str:
-    """Generate the answer and show it in the channel as it arrives.
-
-    The model may ask for a tool in the middle of its answer: the tool is
-    run, its result is fed back, and the model continues.  Returns the
-    complete answer, or an empty string when the model produced nothing.
-    """
-    answer = ""
-    last_edit = 0.0
-    messages: list[dict] | None = None
-    schemas = registry.tool_schemas()
-
-    for _round in range(config.CHAT_MAX_TOOL_ROUNDS + 1):
-        pending_calls: list[llm.ToolCall] = []
-
-        async for item in llm.stream_complete(
-            prompt,
-            context,
-            system=system,
-            tools=schemas,
-            messages=messages,
-        ):
-            if isinstance(item, llm.ToolCall):
-                pending_calls.append(item)
-                continue
-
-            answer += item
-            now = time.monotonic()
-            if now - last_edit < config.CHAT_EDIT_INTERVAL:
-                continue
-            last_edit = now
-            try:
-                await ctx.respond.edit(
-                    content=chat_view.render_chat_stream(answer, config.OLLAMA_MODEL)
-                )
-            except Exception:
-                logger.debug("Could not edit the streaming message", exc_info=True)
-
-        if not pending_calls:
-            return answer.strip()
-
-        # The model wants a tool: run it, feed the result back, and let the
-        # model write the real answer.  It may ask for several tools at
-        # once, so they all go into the same assistant message.
-        if messages is None:
-            messages = llm.build_conversation(prompt, context, system)
-        messages.append(llm.tool_call_message(pending_calls, answer))
-        for call in pending_calls:
-            result = await _run_tool(call)
-            messages.append(call.as_result(result))
-        # The text so far belonged to the tool request; the real answer
-        # starts in the next round.
-        answer = ""
-
-    return answer.strip()
-
-
-async def _complete_answer(
-    ctx: CommandContext,
-    prompt: str,
-    context: list[str],
-    system: str = CHAT_SYSTEM_PROMPT,
-) -> str:
-    """Generate the answer in one shot, without streaming.
-
-    The tool loop still runs: the model may ask for a tool, it is executed,
-    and the model is asked again for the final answer.
-    """
-    schemas = registry.tool_schemas()
-    messages = llm.build_conversation(prompt, context, system)
-
-    for _round in range(config.CHAT_MAX_TOOL_ROUNDS + 1):
-        answer = await llm.complete(
-            messages=messages,
-            tools=schemas,
-            system=system,
-        )
-        if not answer.wants_tools:
-            return answer.content
-
-        messages.append(llm.tool_call_message(answer.tool_calls, answer.content))
-        for call in answer.tool_calls:
-            result = await _run_tool(call)
-            messages.append(call.as_result(result))
-
-    return ""
-
-
 def _error_kind(exc: Exception) -> str:
     """The kind of failure an exception represents."""
     if isinstance(exc, llm.OllamaModelMissing):
@@ -294,6 +186,10 @@ async def _answer(
 ) -> str:
     """Answer a message and post the answer in the channel.
 
+    The agent does the work: it decides which tools to call, runs them,
+    reads the results and writes the answer.  The trace of that run is
+    kept, so ``/trace`` can show how the answer was found.
+
     The answer is streamed into a single message: the placeholder sent
     first is *edited* into the answer, so the channel never shows the same
     reply twice.  Returns the answer, or an empty string when the model
@@ -304,17 +200,34 @@ async def _answer(
     # Acknowledge immediately — a local model can take a while to answer.
     await ctx.respond(content=chat_view.render_chat_thinking())
 
-    answer = ""
+    agent = Agent(system=system)
+    last_edit = 0.0
+
+    async def on_delta(text: str) -> None:
+        """Show the answer as the model writes it."""
+        nonlocal last_edit
+        now = time.monotonic()
+        if now - last_edit < config.CHAT_EDIT_INTERVAL:
+            return
+        last_edit = now
+        try:
+            await ctx.respond.edit(
+                content=chat_view.render_chat_stream(text, config.OLLAMA_MODEL)
+            )
+        except Exception:
+            logger.debug("Could not edit the streaming message", exc_info=True)
+
     try:
         # The typing indicator tells the user the bot is working, so the
         # wait does not feel like being ignored.
         async with ctx.typing_indicator():
-            if config.CHAT_STREAM:
-                answer = await _stream_answer(ctx, prompt, context, system)
-                if not answer:
-                    raise llm.OllamaEmpty("Ollama returned an empty answer")
-            else:
-                answer = await _complete_answer(ctx, prompt, context, system)
+            # Without streaming the answer is produced in one go, which
+            # costs fewer requests to the model but feels slower.
+            trace = await agent.run(
+                prompt,
+                context,
+                on_delta=on_delta if config.CHAT_STREAM else None,
+            )
     except Exception as exc:
         kind = _error_kind(exc)
         if kind == "empty":
@@ -329,7 +242,6 @@ async def _answer(
                     num_predict=config.OLLAMA_RETRY_NUM_PREDICT,
                     think=False,
                 )
-                kind = ""
             except Exception as retry_exc:
                 logger.exception("Ollama chat failed")
                 await ctx.respond(
@@ -344,6 +256,10 @@ async def _answer(
                 content=chat_view.render_chat_error(kind, str(exc))
             )
             return ""
+    else:
+        answer = trace.answer
+        # Keep the trace: ``/trace`` shows how the answer was found.
+        LAST_TRACES[_channel_id(ctx)] = trace
 
     if not answer.strip():
         await ctx.respond(content=chat_view.render_chat_error("empty"))
@@ -394,6 +310,20 @@ async def cmd_listen(ctx: CommandContext) -> None:
     )
 
 
+async def cmd_trace(ctx: CommandContext) -> None:
+    """Show the trace of the last answer of this channel.
+
+    The trace is what the agent *did* — the tools it called and what they
+    returned.  Showing it turns "the bot said something" into "here is how
+    the bot worked it out".
+    """
+    trace = LAST_TRACES.get(_channel_id(ctx))
+    if trace is None:
+        await ctx.respond(content="Aucun agent n'a encore répondu dans ce salon.")
+        return
+    await ctx.respond(embed=chat_view.render_agent_trace(trace))
+
+
 async def cmd_forget(ctx: CommandContext) -> None:
     """Forget the conversation of this channel.
 
@@ -409,7 +339,9 @@ __all__ = [
     "CHAT_SYSTEM_PROMPT_LISTEN",
     "CHAT_SYSTEM_PROMPT_LOW",
     "EMBED_THRESHOLD",
+    "LAST_TRACES",
     "MEMORY",
     "cmd_forget",
     "cmd_listen",
+    "cmd_trace",
 ]
